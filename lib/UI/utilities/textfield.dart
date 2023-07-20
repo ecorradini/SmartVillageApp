@@ -23,5 +23,6 @@ class SmartVillageTextField extends CupertinoTextField {
       color: CupertinoColors.white,
     ),
     padding: const EdgeInsets.all(12),
+    scrollPadding: const EdgeInsets.only(bottom:40)
   );
 }

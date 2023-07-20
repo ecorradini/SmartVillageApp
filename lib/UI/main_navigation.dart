@@ -5,8 +5,8 @@ import 'package:smartvillage/UI/home_before.dart';
 import 'configura.dart';
 
 class MainNavigation extends StatefulWidget {
-  final bool logged;
-  const MainNavigation({super.key, required this.logged});
+  final Map<String,dynamic> initValues;
+  const MainNavigation({super.key, required this.initValues});
 
   @override
   MainNavigationState createState() => MainNavigationState();
@@ -27,7 +27,7 @@ class MainNavigationState extends State<MainNavigation> {
                 icon: Icon(CupertinoIcons.house_fill),
                 label: 'Home',
               ),
-              if(widget.logged) const BottomNavigationBarItem(
+              if(widget.initValues["logged"] ?? false) const BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.heart_fill),
                 label: 'Salute',
               ),
@@ -41,13 +41,13 @@ class MainNavigationState extends State<MainNavigation> {
             return CupertinoTabView(
               builder: (BuildContext context) {
                 if(index==0) {
-                  if(!widget.logged) {
+                  if(!widget.initValues["logged"]) {
                     return const HomeBefore();
                   } else {
                     return Container();
                   }
                 } else if (index==1) {
-                  if(widget.logged) {
+                  if(widget.initValues["logged"] ?? false) {
                     return Container();
                   } else {
                     return const Configura();

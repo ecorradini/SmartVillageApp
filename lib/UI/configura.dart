@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/UI/utilities/app_bar.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
@@ -24,9 +25,12 @@ class ConfiguraState extends State<Configura> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SmartVillageAppBar(title: "Configura",),
+      appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(100.0), // here the desired height
+          child: SmartVillageAppBar(title: "Configura",background: Theme.of(context).colorScheme.background,)
+      ),
       body: Padding(
-        padding: const EdgeInsets.only(left: 15, right: 15, top: 50, bottom: 80),
+        padding: const EdgeInsets.only(left: 15, right: 15, top: 30, bottom: 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -49,16 +53,21 @@ class ConfiguraState extends State<Configura> {
                       CupertinoSwitch(
                         // This bool value toggles the switch.
                         value: APIManager.testMode,
-                        activeColor: CupertinoColors.activeGreen,
+                        activeColor: Theme.of(context).colorScheme.primary,
                         onChanged: (bool? value) {
                           // This is called when the user toggles the switch.
                           setState(() {
                             APIManager.testMode = value ?? false;
+                            SharedPreferences.getInstance().then((prefs) {
+                              prefs.setBool("testMode", value ?? false);
+                            });
                           });
                         },
                       ),
                     ],
                   ),
+                  const Text("Visualizza i Termini e Condizioni di utilizzo", textAlign: TextAlign.start),
+                  const Text("Visualizza la Politica della Privacy", textAlign: TextAlign.start,),
                 ]
             ),
             const Spacer(),
@@ -69,8 +78,8 @@ class ConfiguraState extends State<Configura> {
                 onPressed: () {
                   FocusManager.instance.primaryFocus?.unfocus();
                 },
-                color: CupertinoColors.destructiveRed,
-                textColor: CupertinoColors.white,
+                color: Theme.of(context).colorScheme.error,
+                textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
             const SizedBox(height: 10,),
@@ -81,8 +90,8 @@ class ConfiguraState extends State<Configura> {
                 onPressed: () {
                   FocusManager.instance.primaryFocus?.unfocus();
                 },
-                color: CupertinoColors.destructiveRed,
-                textColor: CupertinoColors.white,
+                color: Theme.of(context).colorScheme.error,
+                textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
           ],

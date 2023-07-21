@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../UI/utilities/error_manager.dart';
+
 class APIManager {
   static const String _PRODURL = "https://services.mosaicoproject.it/api/v2";
   static const String _TESTURL = "https://test-services.mosaicoproject.it/api/v2";
 
-  static const String ERROR_UNKOWN = "Unknown";
-  static const String ERROR_ACCOUNT_NOT_EXISTS = "AccountNotExists";
-
   static bool testMode = false;
+  static String? authToken;
 
   static Future<String> auth({email = String, password = String}) async {
     Map<String,dynamic> res = await _postData(
@@ -23,10 +23,10 @@ class APIManager {
       return res["result"]["authToken"];
     }
     else if(res.containsKey("errors")) {
-      return res["errors"]![0]["type"] ?? "Unknown";
+      return "error_${res["errors"]![0]["type"] ?? "Unknown"}";
     }
     else {
-      return ERROR_UNKOWN;
+      return ErrorManager.ERROR_UNKOWN;
     }
   }
 

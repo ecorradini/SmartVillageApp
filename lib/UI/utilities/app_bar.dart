@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SmartVillageAppBar extends AppBar {
-  SmartVillageAppBar({Key? key, String title="Smart Village", Color background=CupertinoColors.white}) : super(
+  SmartVillageAppBar({Key? key, String? title, Color background=CupertinoColors.white}) : super(
     key: key,
     title: Text(
-      title,
+      title ?? "Smart Village",
       style: const TextStyle(
         fontSize: 30,
         fontWeight: FontWeight.bold,

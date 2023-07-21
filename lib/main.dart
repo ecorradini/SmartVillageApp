@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
+import 'package:smartvillage/UI/loading_splash.dart';
 import 'package:smartvillage/UI/main_navigation.dart';
+import 'package:upgrader/upgrader.dart';
 
 void main() {
   runApp(const SmartVillageApp());
@@ -57,6 +60,10 @@ class SmartVillageAppState extends State<SmartVillageApp> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       title: 'Smart Village',
       theme: ThemeData(
@@ -67,7 +74,25 @@ class SmartVillageAppState extends State<SmartVillageApp> {
           background: CupertinoColors.lightBackgroundGray,
           onBackground: CupertinoColors.black,
           error: CupertinoColors.destructiveRed,
-          onError: CupertinoColors.white
+          onError: CupertinoColors.white,
+          surface: CupertinoColors.white,
+          onSurface: CupertinoColors.black,
+            secondary: CupertinoColors.systemGrey
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: const ColorScheme.dark(
+          brightness: Brightness.dark,
+          primary: CupertinoColors.systemGreen,
+          onPrimary: CupertinoColors.white,
+          background: CupertinoColors.darkBackgroundGray,
+          onBackground: CupertinoColors.white,
+          error: CupertinoColors.destructiveRed,
+          onError: CupertinoColors.white,
+          surface: CupertinoColors.black,
+          onSurface: CupertinoColors.white,
+          secondary: CupertinoColors.lightBackgroundGray
         ),
         useMaterial3: true,
       ),
@@ -76,10 +101,13 @@ class SmartVillageAppState extends State<SmartVillageApp> {
         builder: (context, snapshot) {
           if(snapshot.hasData) {
             Map<String,dynamic> currentValues = snapshot.data!;
-            return MainNavigation(initValues: currentValues,);
+            return UpgradeAlert(
+                upgrader: Upgrader(dialogStyle: UpgradeDialogStyle.cupertino),
+                child: MainNavigation(initValues: currentValues,),
+            );
           } else if(snapshot.connectionState == ConnectionState.waiting) {
             //LOADING SPLASH
-            return Container();
+            return LoadingSplashScreen();
           } else {
             //ERROR
             return Container();

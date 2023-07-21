@@ -16,15 +16,15 @@ class RoundedContainer extends StatelessWidget {
       );
       newWidgetList.add(container);
       if(i<widgets.length-1) {
-        newWidgetList.add(const Divider(height: 1, color: CupertinoColors.lightBackgroundGray,));
+        newWidgetList.add(Divider(height: 1, color: Theme.of(context).colorScheme.background,));
       }
     }
     return Container(
       decoration: BoxDecoration(
-        color: CupertinoColors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
-          color: CupertinoColors.lightBackgroundGray,
+          color: Theme.of(context).colorScheme.background,
           width: 1.0,
         ),
       ),

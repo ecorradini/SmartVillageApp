@@ -6,6 +6,7 @@ import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/UI/utilities/app_bar.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
+import 'package:smartvillage/UI/utilities/scaffold.dart';
 
 class Configura extends StatefulWidget {
   const Configura({super.key});
@@ -24,13 +25,9 @@ class ConfiguraState extends State<Configura> {
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(100.0), // here the desired height
-          child: SmartVillageAppBar(title: "Configura",background: Theme.of(context).colorScheme.background,)
-      ),
-      body: Padding(
-        padding: const EdgeInsets.only(left: 15, right: 15, top: 30, bottom: 80),
+
+    return SmartVillageScaffold(
+      appBarTitle: "Configura",
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -94,9 +91,9 @@ class ConfiguraState extends State<Configura> {
                 textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
+            const Spacer(),
           ],
         ),
-      ),
     );
   }
 }

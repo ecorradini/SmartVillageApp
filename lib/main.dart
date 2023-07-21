@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/UI/loading_splash.dart';
@@ -8,7 +9,11 @@ import 'package:smartvillage/UI/main_navigation.dart';
 import 'package:upgrader/upgrader.dart';
 
 void main() {
-  runApp(const SmartVillageApp());
+  runApp(
+    Phoenix(
+      child: const SmartVillageApp(),
+    ),
+  );
   WidgetsFlutterBinding.ensureInitialized();
 }
 
@@ -33,11 +38,12 @@ class SmartVillageAppState extends State<SmartVillageApp> {
     Map<String,dynamic> res = {};
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    //LOGIN
-    res["logged"] = await autoLogin(prefs);
-
     //TEST MODE
     APIManager.testMode = prefs.getBool("testMode") ?? false;
+
+    //LOGIN
+    res["logged"] = await autoLogin(prefs);
+    res["loggedFromTest"] = prefs.getBool("loggedFromTest");
 
     return res;
   }
@@ -52,8 +58,15 @@ class SmartVillageAppState extends State<SmartVillageApp> {
       return false;
     }
     else {
-      //TODO: Auto Login
-      return true;
+      //AUTOLOGIN
+      bool logged = await APIManager.login(
+          email: email,
+          password: password,
+          codiceFiscale: codiceFiscale,
+          prefs: prefs,
+          context: context
+      );
+      return logged;
     }
   }
 
@@ -69,7 +82,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
       theme: ThemeData(
         colorScheme: const ColorScheme.light(
           brightness: Brightness.light,
-          primary: CupertinoColors.systemGreen,
+          primary: Color(0xFFFF7D0B),
           onPrimary: CupertinoColors.white,
           background: CupertinoColors.lightBackgroundGray,
           onBackground: CupertinoColors.black,
@@ -84,7 +97,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
       darkTheme: ThemeData(
         colorScheme: const ColorScheme.dark(
           brightness: Brightness.dark,
-          primary: CupertinoColors.systemGreen,
+          primary: Color(0xFFFF7D0B),
           onPrimary: CupertinoColors.white,
           background: CupertinoColors.darkBackgroundGray,
           onBackground: CupertinoColors.white,
@@ -92,7 +105,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
           onError: CupertinoColors.white,
           surface: CupertinoColors.black,
           onSurface: CupertinoColors.white,
-          secondary: CupertinoColors.lightBackgroundGray
+          secondary: CupertinoColors.lightBackgroundGray,
         ),
         useMaterial3: true,
       ),

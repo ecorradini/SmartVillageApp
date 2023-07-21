@@ -40,6 +40,9 @@ dependencies:
   http: ^1.1.0
   upgrader: ^8.0.0
   flutter_spinkit: ^5.2.0
+  health: ^7.0.1
+  flutter_phoenix: ^1.1.1
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +60,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
+  assets:
+    - assets/
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.

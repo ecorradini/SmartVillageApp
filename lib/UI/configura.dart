@@ -9,7 +9,9 @@ import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
 class Configura extends StatefulWidget {
-  const Configura({super.key});
+  final bool? loggedFromTest;
+  final bool? logged;
+  const Configura({super.key, this.loggedFromTest, this.logged});
 
   @override
   ConfiguraState createState() => ConfiguraState();
@@ -43,7 +45,7 @@ class ConfiguraState extends State<Configura> {
                         }
                       }
                   ),
-                  Row(
+                  if (!(widget.logged ?? false) || ((widget.logged ?? false) && (widget.loggedFromTest ?? false))) Row(
                     children: [
                       const Text("Modalità di test", style: TextStyle(fontSize: 17)),
                       const Spacer(),
@@ -91,7 +93,7 @@ class ConfiguraState extends State<Configura> {
                 textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 80,)
           ],
         ),
     );

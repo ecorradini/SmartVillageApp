@@ -1,10 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/error_manager.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 import 'package:smartvillage/UI/utilities/textfield.dart';
+
+import '../API/user.dart';
 
 class HomeBefore extends StatefulWidget {
   const HomeBefore({super.key});
@@ -78,18 +84,20 @@ class HomeBeforeState extends State<HomeBefore> {
               onPressed: () async {
                 setState(() {loading = true;});
                 FocusManager.instance.primaryFocus?.unfocus();
-                //TODO: LOADING
-                String result = await APIManager.auth(
-                    email: _emailTextController.text.trim(),
-                    password: _passwordTextController.text.trim()
-                );
-                print("AUTH $result");
-                if(result.contains("error_")) {
-                  if (context.mounted) ErrorManager.showError(context, result);
-                } else {
-                  APIManager.authToken = result;
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                if(context.mounted) {
+                  bool logged = await APIManager.login(
+                      email: _emailTextController.text.trim(),
+                      password: _passwordTextController.text.trim(),
+                      codiceFiscale: _cfTextController.text.trim(),
+                      prefs: prefs,
+                      context: context
+                  );
+                  setState(() {loading = false;});
+                  if (logged && context.mounted) {
+                    Phoenix.rebirth(context);
+                  }
                 }
-                setState(() {loading = false;});
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
             ),

@@ -9,6 +9,7 @@ class SmartVillageAppBar extends AppBar {
       style: const TextStyle(
         fontSize: 30,
         fontWeight: FontWeight.bold,
+
       ),
       textAlign: TextAlign.start,
     ),

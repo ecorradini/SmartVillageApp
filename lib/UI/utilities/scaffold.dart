@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'app_bar.dart';
 
 class SmartVillageScaffold extends StatefulWidget {
-  final bool loading;
+  final bool? loading;
   final Widget child;
   final String? appBarTitle;
   final bool smallBar;
-  const SmartVillageScaffold({super.key, this.loading = false, required this.child, this.appBarTitle, this.smallBar = false});
+  const SmartVillageScaffold({super.key, this.loading, required this.child, this.appBarTitle, this.smallBar = false});
 
   @override
   SmartVillageScaffoldState createState() => SmartVillageScaffoldState();
@@ -17,7 +17,7 @@ class SmartVillageScaffoldState extends State<SmartVillageScaffold> {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-        ignoring: widget.loading,
+        ignoring: widget.loading ?? false,
         child: Scaffold(
           appBar: PreferredSize(
               preferredSize: Size.fromHeight(widget.smallBar ? 50 : 100.0), // here the desired height

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:smartvillage/UI/home_after.dart';
 import 'package:smartvillage/UI/home_before.dart';
+import 'package:smartvillage/UI/salute.dart';
 
 import 'configura.dart';
 
@@ -44,16 +46,16 @@ class MainNavigationState extends State<MainNavigation> {
                   if(!widget.initValues["logged"]) {
                     return const HomeBefore();
                   } else {
-                    return Container();
+                    return HomeAfter();
                   }
                 } else if (index==1) {
                   if(widget.initValues["logged"] ?? false) {
-                    return Container();
+                    return Salute();
                   } else {
-                    return const Configura();
+                    return Configura(loggedFromTest: widget.initValues["loggedFromTest"], logged: widget.initValues["logged"],);
                   }
                 } else {
-                  return const Configura();
+                  return Configura(loggedFromTest: widget.initValues["loggedFromTest"], logged: widget.initValues["logged"],);
                 }
               },
             );

@@ -5,6 +5,7 @@ class ErrorManager {
   static const String ERROR_ACCOUNT_NOT_EXISTS = "error_AccountNotExists";
   static const String ERROR_EMAIL_REQUIRED = "error_EmailRequired";
   static const String ERROR_PASSWORD_REQUIRED = "error_PasswordRequired";
+  static const String ERROR_PATIENT_NOT_EXISTS = "error_SmartVillage-PatientNotExists";
 
   static void showError(BuildContext context, String type) {
     switch(type) {
@@ -16,6 +17,9 @@ class ErrorManager {
         break;
       case ERROR_ACCOUNT_NOT_EXISTS:
         _noAccountError(context);
+        break;
+      case ERROR_PATIENT_NOT_EXISTS:
+        _noPatientError(context);
         break;
       default:
         _defaultError(context);
@@ -35,6 +39,12 @@ class ErrorManager {
 
   static void _noPasswordError(BuildContext context) {
     _showSimpleErrorDialog(context, "Per favore, inserisci la password per procedere con il login.");
+  }
+
+  static void _noPatientError(BuildContext context) {
+    _showSimpleErrorDialog(context, "Purtroppo non è stato trovato il codice fiscale che hai inserito.\n"
+        "Per poter utilizzare Smart Village, è necessario contattare il proprio medico di base per procedere con la registrazione.\n\n"
+        "Per favore, contatta il tuo medico di base e, se convenzionato, procedi con la registrazione al servizio.");
   }
 
   static void _defaultError(BuildContext context) {

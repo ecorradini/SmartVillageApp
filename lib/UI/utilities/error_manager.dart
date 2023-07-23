@@ -51,6 +51,10 @@ class ErrorManager {
     _showSimpleErrorDialog(context, "È avvenuto un errore imprevisto. Per favore, riprova più tardi.");
   }
 
+  static void uploadError(BuildContext context) {
+    _showSimpleErrorDialog(context, "È avvenuto un errore durante la sincronizzazione. Per favore, riprova più tardi.");
+  }
+
   static void _showSimpleErrorDialog(BuildContext context, String text) {
     showCupertinoModalPopup<void>(
       context: context,

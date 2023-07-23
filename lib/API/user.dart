@@ -9,4 +9,5 @@ class Utente {
   static String id = "";
   static String pairingCode = "";
   static String pin = "";
+  static String codiceFiscale = "";
 }

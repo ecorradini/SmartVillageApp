@@ -45,5 +45,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSHealthShareUsageDescription</key>
+    <string>Smart Village necessita di sincronizzare i dati salute per il funzionamento del servizio.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>Smart Village necessita di sincronizzare i dati salute per il funzionamento del servizio.</string>
 </dict>
 </plist>

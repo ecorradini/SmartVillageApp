@@ -22,8 +22,11 @@ class MainNavigationState extends State<MainNavigation> {
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: SafeArea(
       top: false,
+        bottom: false,
         child: CupertinoTabScaffold(
           tabBar: CupertinoTabBar(
+            backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+            inactiveColor: Theme.of(context).colorScheme.onSurfaceVariant,
             items: <BottomNavigationBarItem>[
               const BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.house_fill),

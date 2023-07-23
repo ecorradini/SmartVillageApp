@@ -6,9 +6,12 @@ class LoadingSplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Spacer(),
-          SpinKitSpinningLines(color: Theme.of(context).colorScheme.primary),
+          Center(
+            child: SpinKitPumpingHeart(color: Theme.of(context).colorScheme.primary),
+          ),
           const Spacer()
         ],
       )

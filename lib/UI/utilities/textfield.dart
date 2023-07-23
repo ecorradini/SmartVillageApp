@@ -54,11 +54,13 @@ class SmartVillageTextFieldWithIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RoundedContainer(
+      paddings: false,
         widgets: [
           Row(
             children: [
               Icon(
-                icon
+                icon,
+                color: Theme.of(context).colorScheme.onTertiary,
               ),
               const SizedBox(width: 10,),
               Expanded(

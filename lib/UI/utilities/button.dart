@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class SmartVillageButton extends StatefulWidget {
@@ -5,8 +6,8 @@ class SmartVillageButton extends StatefulWidget {
   final Color textColor;
   final Color color;
   final VoidCallback onPressed;
-  final bool loading;
   final bool big;
+  final bool enabled;
 
   const SmartVillageButton({
     Key? key,
@@ -14,8 +15,8 @@ class SmartVillageButton extends StatefulWidget {
     required this.color,
     required this.onPressed,
     required this.textColor,
-    this.loading = false,
-    this.big = false
+    this.big = false,
+    this.enabled = true,
   }) : super(key: key);
 
   @override
@@ -27,14 +28,33 @@ class SmartVillageButtonState extends State<SmartVillageButton> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: _buttonWidth,
-      height: widget.big ? 55 : 40,
-      child: ElevatedButton(
-        onPressed: widget.loading ? null : widget.onPressed,
+    if(widget.enabled) {
+      return SizedBox(
+        width: _buttonWidth,
+        height: widget.big ? 55 : 40,
+        child: ElevatedButton(
+          onPressed: widget.onPressed,
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(widget.color),
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+                side: BorderSide.none,
+              ),
+            ),
+            elevation: MaterialStateProperty.all<double>(0),
+          ),
+          child: Text(
+            widget.text,
+            style: TextStyle(fontSize: 18, color: widget.textColor),
+          ),
+        ),
+      );
+    } else {
+      return ElevatedButton(
+        onPressed: null,
         style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all<Color>(widget.color),
+          backgroundColor: MaterialStateProperty.all<Color>(CupertinoColors.inactiveGray),
           shape: MaterialStateProperty.all<RoundedRectangleBorder>(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
@@ -43,36 +63,12 @@ class SmartVillageButtonState extends State<SmartVillageButton> {
           ),
           elevation: MaterialStateProperty.all<double>(0),
         ),
-        onLongPress: widget.onPressed,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (widget.loading)
-              SizedBox(
-                height: 18,
-                width: 18,
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(widget.textColor),
-                  strokeWidth: 2.0,
-                ),
-              ),
-            Text(
-              widget.text,
-              style: TextStyle(fontSize: 18, color: widget.textColor),
-            ),
-          ],
+        onLongPress: null,
+        child: Text(
+          widget.text,
+          style: const TextStyle(fontSize: 18, color: CupertinoColors.white),
         ),
-      ),
-    );
-  }
-
-  @override
-  void didUpdateWidget(SmartVillageButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.loading != widget.loading) {
-      setState(() {
-        _buttonWidth = widget.loading ? 36.0 : double.infinity;
-      });
+      );
     }
   }
 }

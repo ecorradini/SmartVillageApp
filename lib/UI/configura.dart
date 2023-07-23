@@ -1,9 +1,9 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
-import 'package:smartvillage/UI/utilities/app_bar.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
@@ -39,7 +39,7 @@ class ConfiguraState extends State<Configura> {
                       future: packageInfo,
                       builder: (context, snapshot) {
                         if(snapshot.hasData) {
-                          return Text("Versione app: ${snapshot.data!.version}", style: TextStyle(fontSize: 17));
+                          return Text("Versione app: ${snapshot.data!.version}", style: TextStyle(fontSize: 17, color: Theme.of(context).colorScheme.onTertiary));
                         } else {
                           return const Text("Versione app: ", style: TextStyle(fontSize: 17));
                         }
@@ -47,11 +47,12 @@ class ConfiguraState extends State<Configura> {
                   ),
                   if (!(widget.logged ?? false) || ((widget.logged ?? false) && (widget.loggedFromTest ?? false))) Row(
                     children: [
-                      const Text("Modalità di test", style: TextStyle(fontSize: 17)),
+                      Text("Modalità di test", style: TextStyle(fontSize: 17, color: Theme.of(context).colorScheme.onTertiary)),
                       const Spacer(),
                       CupertinoSwitch(
                         // This bool value toggles the switch.
                         value: APIManager.testMode,
+                        trackColor: CupertinoColors.lightBackgroundGray,
                         activeColor: Theme.of(context).colorScheme.primary,
                         onChanged: (bool? value) {
                           // This is called when the user toggles the switch.
@@ -65,8 +66,8 @@ class ConfiguraState extends State<Configura> {
                       ),
                     ],
                   ),
-                  const Text("Visualizza i Termini e Condizioni di utilizzo", textAlign: TextAlign.start),
-                  const Text("Visualizza la Politica della Privacy", textAlign: TextAlign.start,),
+                  AutoSizeText(maxLines: 1, "Visualizza i Termini e Condizioni di utilizzo", textAlign: TextAlign.start, style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
+                  AutoSizeText(maxLines: 1, "Visualizza la Politica della Privacy", textAlign: TextAlign.start, style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
                 ]
             ),
             const Spacer(),
@@ -93,7 +94,7 @@ class ConfiguraState extends State<Configura> {
                 textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
-            const SizedBox(height: 80,)
+            const SizedBox(height: 40,)
           ],
         ),
     );

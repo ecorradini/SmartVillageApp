@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 
 class RoundedContainer extends StatelessWidget {
   final List<Widget> widgets;
-  const RoundedContainer({super.key, required this.widgets});
+  final bool paddings;
+  const RoundedContainer({super.key, required this.widgets, this.paddings = true});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +12,7 @@ class RoundedContainer extends StatelessWidget {
     for(int i=0; i<widgets.length; i++) {
       Container container = Container(
         alignment: Alignment.centerLeft,
-        height: 50,
+        height: paddings ? 50 : 45,
         child: widgets[i],
       );
       newWidgetList.add(container);
@@ -21,7 +22,7 @@ class RoundedContainer extends StatelessWidget {
     }
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).colorScheme.tertiary,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: Theme.of(context).colorScheme.background,
@@ -29,10 +30,11 @@ class RoundedContainer extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: paddings ? const EdgeInsets.symmetric(horizontal: 8) : const EdgeInsets.only(left: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: newWidgetList,
         ),
       ),

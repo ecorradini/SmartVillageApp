@@ -10,6 +10,7 @@ import 'package:smartvillage/UI/utilities/error_manager.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
 import '../API/api_manager.dart';
+import '../API/background_service_helper.dart';
 
 class Salute extends StatefulWidget {
   Salute({super.key});
@@ -27,6 +28,9 @@ class SaluteState extends State<Salute> {
   void initState() {
     healthSync = APIManager.healthSync;
     lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;
+    HealthManager.readLastMeasurementsUpload().then((_) {
+      lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;
+    });
     super.initState();
   }
 
@@ -64,6 +68,32 @@ class SaluteState extends State<Salute> {
                 setState(() {
                   healthSync = gotPermissions;
                 });
+                Map<String,dynamic> allReads = await HealthManager.readData();
+                String uploadedId = await APIManager.uploadMeasurements(
+                  valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
+                  valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
+                  valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
+                  valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
+                  valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
+                  valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+                  valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
+                  valuesECG: allReads[APIManager.ECG_IDENTIFIER],
+                );
+                if(!uploadedId.contains("error_")) {
+                  APIManager.lastMeasurementID = uploadedId;
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  prefs.setString("lastMeasurementID", uploadedId);
+                  await HealthManager.readLastMeasurementsUpload();
+                  setState(() {lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;});
+                  //TODO: ENABLE BACKGROUND SERVICE
+                  print("UPLOADED: ${await APIManager.getLastMeasurements()}");
+                } else {
+                  if(context.mounted) {
+                    ErrorManager.uploadError(context);
+                  }
+                }
+                //LocalNotificationService.initialize();
+                //APIManager.initializeBackground();
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
@@ -81,6 +111,11 @@ class SaluteState extends State<Salute> {
                     // This is called when the user toggles the switch.
                     setState(() {
                       APIManager.autoSync = value ?? false;
+                      if(value ?? false) {
+                        BackgroundServiceHelper.enableBackgroundService();
+                      } else {
+                        BackgroundServiceHelper.stopService();
+                      }
                       SharedPreferences.getInstance().then((prefs) {
                         prefs.setBool("autoSync", value ?? false);
                       });
@@ -124,7 +159,7 @@ class SaluteState extends State<Salute> {
                   APIManager.lastMeasurementID = uploadedId;
                   SharedPreferences prefs = await SharedPreferences.getInstance();
                   prefs.setString("lastMeasurementID", uploadedId);
-                  HealthManager.readLastDates();
+                  await HealthManager.readLastMeasurementsUpload();
                   setState(() {lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;});
                   print("UPLOADED: ${await APIManager.getLastMeasurements()}");
                 } else {

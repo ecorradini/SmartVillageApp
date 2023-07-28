@@ -1,15 +1,20 @@
+import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
+import 'package:smartvillage/API/background_service_helper.dart';
 import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/loading_splash.dart';
 import 'package:smartvillage/UI/main_navigation.dart';
 import 'package:upgrader/upgrader.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+
+import 'API/notification_service.dart';
 
 void main() {
   runApp(
@@ -17,17 +22,6 @@ void main() {
       child: const SmartVillageApp(),
     ),
   );
-  EasyLoading.instance
-    ..indicatorType = EasyLoadingIndicatorType.pumpingHeart
-    ..loadingStyle = EasyLoadingStyle.dark
-    ..indicatorSize = 45.0
-    ..radius = 10.0
-    ..progressColor = const Color(0xFFFF7D0B)
-    ..backgroundColor = const Color(0xFF545A99)
-    ..indicatorColor = const Color(0xFFFF7D0B)
-    ..textColor = const Color(0xFFFF7D0B)
-    ..userInteractions = false
-    ..dismissOnTap = false;
   WidgetsFlutterBinding.ensureInitialized();
 }
 
@@ -38,16 +32,53 @@ class SmartVillageApp extends StatefulWidget {
   SmartVillageAppState createState() => SmartVillageAppState();
 }
 
-class SmartVillageAppState extends State<SmartVillageApp> {
+class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObserver {
   late Future<Map<String,dynamic>> initValues;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if(state == AppLifecycleState.resumed) {
+      HealthManager.readData().then((allReads) {
+        APIManager.uploadMeasurements(
+          valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
+          valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
+          valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
+          valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
+          valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
+          valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+          valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
+          valuesECG: allReads[APIManager.ECG_IDENTIFIER],
+        ).then((uploadedId) {
+          if(!uploadedId.contains("error_")) {
+            APIManager.lastMeasurementID = uploadedId;
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setString("lastMeasurementID", uploadedId);
+              HealthManager.readLastMeasurementsUpload();
+            });
+          }
+        });
+      });
+    }
+  }
 
   @override
   void initState() {
     initValues = init();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<Map<String,dynamic>> init() async {
+    tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation("Europe/Rome"));
+    await AppTrackingTransparency.requestTrackingAuthorization();
+    await LocalNotificationService.requestPermissionsIOS();
     //USIAMO UN DIZIONARIO NEL CASO IN FUTURO DEBBANO ESSERE AGGIUNGE ULTERIORI INFO DA CARICARE
     Map<String,dynamic> res = {};
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -63,8 +94,30 @@ class SmartVillageAppState extends State<SmartVillageApp> {
     HealthManager.healthSetup();
     APIManager.healthSync = prefs.getBool("healthSync") ?? false;
     APIManager.autoSync = prefs.getBool("autoSync") ?? true;
+    if(res["logged"] && APIManager.healthSync && APIManager.autoSync) {
+      await BackgroundServiceHelper.enableBackgroundService();
+      Map<String,dynamic> allReads = await HealthManager.readData();
+      String uploadedId = await APIManager.uploadMeasurements(
+        valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
+        valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
+        valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
+        valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
+        valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
+        valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+        valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
+        valuesECG: allReads[APIManager.ECG_IDENTIFIER],
+      );
+      if(!uploadedId.contains("error_")) {
+        APIManager.lastMeasurementID = uploadedId;
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString("lastMeasurementID", uploadedId);
+        await HealthManager.readLastMeasurementsUpload();
+        print("UPLOADED: ${await APIManager.getLastMeasurements()}");
+      }
+    }
     APIManager.lastMeasurementID = prefs.getString("lastMeasurementID");
-    HealthManager.readLastDates();
+    await HealthManager.readLastDates();
+    await HealthManager.readLastMeasurementsUpload();
 
     return res;
   }
@@ -117,12 +170,24 @@ class SmartVillageAppState extends State<SmartVillageApp> {
           surfaceVariant: Color(0xFF202880),
           onSurfaceVariant: CupertinoColors.lightBackgroundGray
         ),
+        fontFamily: 'ArialRoundedMT',
         useMaterial3: true,
       ),
       builder: EasyLoading.init(),
       home: FutureBuilder(
         future: initValues,
         builder: (context, snapshot) {
+          EasyLoading.instance
+            ..indicatorType = EasyLoadingIndicatorType.pumpingHeart
+            ..loadingStyle = EasyLoadingStyle.dark
+            ..indicatorSize = 45.0
+            ..radius = 10.0
+            ..progressColor = const Color(0xFFFF7D0B)
+            ..backgroundColor = const Color(0xFF545A99)
+            ..indicatorColor = const Color(0xFFFF7D0B)
+            ..textColor = const Color(0xFFFF7D0B)
+            ..userInteractions = false
+            ..dismissOnTap = false;
           if(snapshot.hasData) {
             Map<String,dynamic> currentValues = snapshot.data!;
             return UpgradeAlert(
@@ -134,6 +199,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
             return LoadingSplashScreen();
           } else {
             //ERROR
+            print(snapshot.error!);
             return Container();
           }
         },

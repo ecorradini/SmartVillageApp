@@ -1,6 +1,7 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
@@ -75,8 +76,15 @@ class ConfiguraState extends State<Configura> {
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Esci dall'app",
-                onPressed: () {
+                onPressed: () async {
+                  EasyLoading.show();
                   FocusManager.instance.primaryFocus?.unfocus();
+                  SharedPreferences prefs = await SharedPreferences.getInstance();
+                  prefs.remove("email");
+                  prefs.remove("password");
+                  prefs.remove("codiceFiscale");
+                  EasyLoading.dismiss();
+
                 },
                 color: Theme.of(context).colorScheme.error,
                 textColor: Theme.of(context).colorScheme.onError,

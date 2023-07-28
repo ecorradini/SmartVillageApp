@@ -28,7 +28,7 @@ class HomeAfter extends StatelessWidget {
                   margin: const EdgeInsets.only(left: 90),
                   child: FittedBox(
                     alignment: Alignment.bottomLeft,
-                    child: AutoSizeText("${Utente.nome} ${Utente.cognome}", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onBackground), maxLines: 1, textAlign: TextAlign.start,)
+                    child: AutoSizeText("${Utente.nome.toUpperCase()} ${Utente.cognome.toUpperCase()}", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary), maxLines: 1, textAlign: TextAlign.start,)
                   )
                 ),
                 const SizedBox(height: 5,),
@@ -52,31 +52,4 @@ class HomeAfter extends StatelessWidget {
         )
     );
   }
-  /*@override
-  Widget build(BuildContext context) {
-    DateTime birth = DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(Utente.dataNascita);
-    DateTime created = DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(Utente.created);
-    String dataNascita = DateFormat("dd/MM/yyyy").format(birth);
-    String dataCreated = DateFormat("dd/MM/yyyy").format(created);
-    return SmartVillageScaffold(
-      appBarTitle: "Smart Village",
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text("${Utente.nome} ${Utente.cognome}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 23),),
-          const SizedBox(height: 20,),
-          Text("Data di nascita: $dataNascita", style: const TextStyle(fontSize: 17),),
-          Text("Genere: ${Utente.genere}", style: const TextStyle(fontSize: 17),),
-          Text("Codice Esenzione: ${Utente.codiceEsenzione.isEmpty ? "Assente" : Utente.codiceEsenzione}", style: const TextStyle(fontSize: 17),),
-          const Spacer(),
-          Text("Stato: ${Utente.stato}"),
-          Text("Creato: $dataCreated"),
-          Text("ID: ${Utente.id}"),
-          Text("Codice Pairing: ${Utente.pairingCode}"),
-          Text("PIN: ${Utente.pin}"),
-          const SizedBox(height: 80,)
-        ],
-      ),
-    );
-  }*/
 }

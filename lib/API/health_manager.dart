@@ -135,7 +135,11 @@ class HealthManager {
     if(lastReadECGS != null) {
       lastReadECG = DateFormat("yyyy-MM-dd HH:mm:ss").parse(lastReadECGS);
     }
+  }
+
+  static Future<void> readLastMeasurementsUpload() async {
     lastMeasurementsUpload = await APIManager.getLastMeasurementDate();
+    print("LAST MEASUREMENTS upload = $lastMeasurementsUpload");
   }
 
   static Future<Map<String,dynamic>> _readHeartRate() async {

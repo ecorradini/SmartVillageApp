@@ -41,7 +41,9 @@ class HomeBeforeState extends State<HomeBefore> {
                   const SizedBox(height: 90,),
                   Padding(
                     padding: const EdgeInsets.only(left: 91),
-                    child: AutoSizeText("Smart Village", minFontSize: 35, style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onBackground), textAlign: TextAlign.start,),
+                    child: FittedBox(
+                      child: AutoSizeText("SMART VILLAGE", style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary), textAlign: TextAlign.start,),
+                    )
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 91),
@@ -101,6 +103,9 @@ class HomeBeforeState extends State<HomeBefore> {
                         );
                         EasyLoading.dismiss();
                         if (logged && context.mounted) {
+                          if(APIManager.autoSync) {
+                            //APIManager.initializeBackground();
+                          }
                           Phoenix.rebirth(context);
                         }
                       }

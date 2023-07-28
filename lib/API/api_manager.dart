@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smartvillage/API/notification_service.dart';
 import 'package:smartvillage/API/user.dart';
 
 import '../UI/utilities/error_manager.dart';
@@ -105,7 +106,7 @@ class APIManager {
 
   static Future<DateTime?> getLastMeasurementDate() async {
     Map<String,dynamic> res = await _getData(hook: "measurements/$lastMeasurementID");
-    if(res.containsKey("data")) {
+    if(res.containsKey("data") && res["data"].length > 0) {
       String lastDate = res["data"]![res["data"].length-1]["uploadDate"];
       return DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
     }

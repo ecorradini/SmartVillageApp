@@ -5,14 +5,27 @@ class LoadingSplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: Stack(
         children: [
-          const Spacer(),
-          Center(
-            child: SpinKitPumpingHeart(color: Theme.of(context).colorScheme.primary),
+          Container(
+            padding: EdgeInsets.only(left: 20, right: 20),
+            child: Image(image: AssetImage('assets/logo.png'), height: MediaQuery.of(context).size.height),
           ),
-          const Spacer()
+          SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Spacer(),
+                  Row(
+                    children: [
+                      const Spacer(),
+                      SpinKitPumpingHeart(color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 40,)
+                    ],
+                  ),
+                ],
+              )
+          )
         ],
       )
     );

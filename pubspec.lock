@@ -37,10 +37,10 @@ packages:
     dependency: "direct main"
     description:
       name: background_fetch
-      sha256: "50ca2971ba35bb29c2533bb3ea9ad88058008d458075558a3786e8a628e23b48"
+      sha256: "4ac8c0d3df7f0f339e0047b36240537504faceb259f28a909be69379e6912854"
       url: "https://pub.dev"
     source: hosted
-    version: "1.1.6"
+    version: "1.2.0"
   boolean_selector:
     dependency: transitive
     description:
@@ -224,6 +224,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
+  health_kit_reporter:
+    dependency: "direct main"
+    description:
+      name: health_kit_reporter
+      sha256: f6de33fa3cdadc9bf5785b7cdab48feba680d8f73c7a39e7181cca68b4f50f3c
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
   html:
     dependency: transitive
     description:

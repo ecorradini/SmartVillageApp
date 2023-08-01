@@ -26,8 +26,6 @@ class APIManager {
   static bool autoSync = true;
   static String? authToken;
 
-  static String? lastMeasurementID;
-
   static Future<String> auth({email = String, password = String}) async {
     Map<String,dynamic> res = await _postData(
       parameters: {
@@ -99,20 +97,6 @@ class APIManager {
     }
   }
 
-  static Future<Map<String,dynamic>> getLastMeasurements() async {
-    Map<String,dynamic> res = await _getData(hook: "measurements/$lastMeasurementID");
-    return res;
-  }
-
-  static Future<DateTime?> getLastMeasurementDate() async {
-    Map<String,dynamic> res = await _getData(hook: "measurements/$lastMeasurementID");
-    if(res.containsKey("data") && res["data"].length > 0) {
-      String lastDate = res["data"]![res["data"].length-1]["uploadDate"];
-      return DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
-    }
-    return null;
-  }
-
   static Future<String> uploadMeasurements({
     List<Map<String,dynamic>>? valuesHR,
     List<Map<String,dynamic>>? valuesBP,
@@ -123,26 +107,29 @@ class APIManager {
     List<Map<String,dynamic>>? valuesW,
     List<Map<String,dynamic>>? valuesECG})
   async {
+    Map<String, dynamic> data = {
+      if(valuesHR != null) HEART_RATE_IDENTIFIER: valuesHR,
+      if(valuesBP != null) BLOOD_PRESSURE_IDENTIFIER: valuesBP,
+      if(valuesOS != null) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
+      if(valuesBMI != null) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
+      if(valuesBFP != null) BODY_FAT_PERCENTAGE_IDENTIFIER: valuesBFP,
+      if(valuesLBM != null) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
+      if(valuesW != null) WEIGHT_IDENTIFIER: valuesW,
+      if(valuesECG != null) ECG_IDENTIFIER: valuesECG
+    };
     Map<String,dynamic> res = await _postData(
         parameters: {
           "patient": {
             "fiscalCode": Utente.codiceFiscale
           },
-          "data": {
-            if(valuesHR != null) HEART_RATE_IDENTIFIER: valuesHR,
-            if(valuesBP != null) BLOOD_PRESSURE_IDENTIFIER: valuesBP,
-            if(valuesOS != null) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
-            if(valuesBMI != null) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
-            if(valuesBFP != null) BODY_FAT_PERCENTAGE_IDENTIFIER: valuesBFP,
-            if(valuesLBM != null) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
-            if(valuesW != null) WEIGHT_IDENTIFIER: valuesW,
-            if(valuesECG != null) ECG_IDENTIFIER: valuesECG
-          }
+          "data": data,
         },
         hook: "measurements"
     );
+    print(res);
     if(res.containsKey("data")) {
-      return res["data"]["id"].toString();
+      return res["data"]![res["data"].length-1]["uploadDate"];
+      //return DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
     }
     else if(res.containsKey("errors")) {
       return "error_${res["errors"]![0]["type"] ?? "Unknown"}";

@@ -1,10 +1,4 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smartvillage/API/api_manager.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
-
-import 'health_manager.dart';
 
 const List<DarwinNotificationCategory> darwinNotificationCategories = <DarwinNotificationCategory>[
   DarwinNotificationCategory(
@@ -37,13 +31,13 @@ class LocalNotificationService {
 
   static Future<void> requestPermissionsIOS() async {
     await _notificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(
-      alert: false,
+      alert: true,
       badge: true,
-      sound: false,
+      sound: true,
     );
   }
 
-  static Future showNotification() async {
+  static Future showNotification(String text) async {
     //TODO: WHEN ANDROID
     var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
         'SmartVillage',
@@ -64,7 +58,7 @@ class LocalNotificationService {
     );
     await _notificationsPlugin.show(0,
         'Smart Village',
-        'I dati sono stati sincronizzati.',
+        text,
         platformChannelSpecifics,
         payload: 'Default_Sound'
     );

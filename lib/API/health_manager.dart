@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 
+import 'background_service_helper.dart';
+import 'notification_service.dart';
+
 class HealthManager {
 
   static HealthFactory? healthFactory;
@@ -39,7 +42,7 @@ class HealthManager {
     return await healthFactory?.requestAuthorization(types) ?? false;
   }
 
-  static Future<Map<String,dynamic>> readData() async {
+  static Future<Map<String,dynamic>> _readData() async {
     List<Map<String,dynamic>> heartRateRead = _convertFromMapToList(await _readHeartRate());
     List<Map<String,dynamic>> bloodPressureRateRead = _convertFromMapToList(await _readBloodPressure());
     List<Map<String,dynamic>> oxygenSaturationRead = _convertFromMapToList(await _readOxygenSaturation());
@@ -60,48 +63,65 @@ class HealthManager {
       APIManager.ECG_IDENTIFIER: null //TODO: ECG
     };
 
-    await _saveLastDates();
-
     return res;
+  }
+
+  static Future<void> writeData()  async {
+    healthSetup();
+    _readLastDates();
+    Map<String,dynamic> allReads = await _readData();
+    String lastDate = await APIManager.uploadMeasurements(
+      valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
+      valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
+      valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
+      valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
+      valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
+      valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+      valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
+      valuesECG: allReads[APIManager.ECG_IDENTIFIER],
+    );
+    if(!lastDate.contains("error_")) {
+      lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
+      await _saveLastDates();
+      print("LAST UPLOADED: $lastDate");
+    } else {
+      LocalNotificationService.showNotification('Errore $lastDate');
+    }
+    await BackgroundServiceHelper.enableBackgroundService();
   }
 
   static Future<void> _saveLastDates() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if(lastReadHeartRate != null) {
-      prefs.setString("lastReadHeartRate",
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadHeartRate!));
+      prefs.setString("lastReadHeartRate", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadHeartRate!));
     }
     if(lastReadBloodPressure != null) {
-      prefs.setString("lastReadBloodPressure",
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBloodPressure!));
+      prefs.setString("lastReadBloodPressure", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBloodPressure!));
     }
     if(lastReadOxygenSaturation != null) {
-      prefs.setString("lastReadOxygenSaturation",
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadOxygenSaturation!));
+      prefs.setString("lastReadOxygenSaturation", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadOxygenSaturation!));
     }
     if(lastReadBMI != null) {
-      prefs.setString(
-          "lastReadBMI", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBMI!));
+      prefs.setString("lastReadBMI", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBMI!));
     }
     if(lastReadBFP != null) {
-      prefs.setString(
-          "lastReadBFP", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBFP!));
+      prefs.setString("lastReadBFP", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadBFP!));
     }
     if(lastReadLBM != null) {
-      prefs.setString("lastReadLBM",
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadLBM!));
+      prefs.setString("lastReadLBM", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadLBM!));
     }
     if(lastReadWeight != null) {
-      prefs.setString("lastReadWeight",
-          DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadWeight!));
+      prefs.setString("lastReadWeight", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadWeight!));
     }
     if(lastReadECG != null) {
-      prefs.setString(
-          "lastReadECG", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadECG!));
+      prefs.setString("lastReadECG", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadECG!));
+    }
+    if(lastMeasurementsUpload != null) {
+      prefs.setString("lastDate", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastMeasurementsUpload!));
     }
   }
 
-  static Future<void> readLastDates() async {
+  static Future<void> _readLastDates() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? lastReadHeartRateS = prefs.getString("lastReadHeartRate");
     String? lastReadBloodPressureS = prefs.getString("lastReadBloodPressure");
@@ -111,6 +131,7 @@ class HealthManager {
     String? lastReadLBMS = prefs.getString("lastReadLBM");
     String? lastReadWeightS = prefs.getString("lastReadWeight");
     String? lastReadECGS = prefs.getString("lastReadECG");
+    String? lastMeasurementsDate = prefs.getString("lastDate");
     if(lastReadHeartRateS != null) {
       lastReadHeartRate = DateFormat("yyyy-MM-dd HH:mm:ss").parse(lastReadHeartRateS);
     }
@@ -135,11 +156,9 @@ class HealthManager {
     if(lastReadECGS != null) {
       lastReadECG = DateFormat("yyyy-MM-dd HH:mm:ss").parse(lastReadECGS);
     }
-  }
-
-  static Future<void> readLastMeasurementsUpload() async {
-    lastMeasurementsUpload = await APIManager.getLastMeasurementDate();
-    print("LAST MEASUREMENTS upload = $lastMeasurementsUpload");
+    if(lastMeasurementsDate != null) {
+      lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastMeasurementsDate);
+    }
   }
 
   static Future<Map<String,dynamic>> _readHeartRate() async {

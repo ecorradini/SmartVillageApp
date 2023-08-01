@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/API/background_service_helper.dart';
@@ -32,45 +33,17 @@ class SmartVillageApp extends StatefulWidget {
   SmartVillageAppState createState() => SmartVillageAppState();
 }
 
-class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObserver {
+class SmartVillageAppState extends State<SmartVillageApp> {
   late Future<Map<String,dynamic>> initValues;
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if(state == AppLifecycleState.resumed) {
-      HealthManager.readData().then((allReads) {
-        APIManager.uploadMeasurements(
-          valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-          valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-          valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-          valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-          valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
-          valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-          valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-          valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-        ).then((uploadedId) {
-          if(!uploadedId.contains("error_")) {
-            APIManager.lastMeasurementID = uploadedId;
-            SharedPreferences.getInstance().then((prefs) {
-              prefs.setString("lastMeasurementID", uploadedId);
-              HealthManager.readLastMeasurementsUpload();
-            });
-          }
-        });
-      });
-    }
-  }
 
   @override
   void initState() {
     initValues = init();
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -95,29 +68,8 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
     APIManager.healthSync = prefs.getBool("healthSync") ?? false;
     APIManager.autoSync = prefs.getBool("autoSync") ?? true;
     if(res["logged"] && APIManager.healthSync && APIManager.autoSync) {
-      await BackgroundServiceHelper.enableBackgroundService();
-      Map<String,dynamic> allReads = await HealthManager.readData();
-      String uploadedId = await APIManager.uploadMeasurements(
-        valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-        valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-        valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-        valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-        valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
-        valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-        valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-        valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-      );
-      if(!uploadedId.contains("error_")) {
-        APIManager.lastMeasurementID = uploadedId;
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString("lastMeasurementID", uploadedId);
-        await HealthManager.readLastMeasurementsUpload();
-        print("UPLOADED: ${await APIManager.getLastMeasurements()}");
-      }
+      await HealthManager.writeData();
     }
-    APIManager.lastMeasurementID = prefs.getString("lastMeasurementID");
-    await HealthManager.readLastDates();
-    await HealthManager.readLastMeasurementsUpload();
 
     return res;
   }

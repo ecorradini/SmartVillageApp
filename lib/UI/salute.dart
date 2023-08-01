@@ -11,6 +11,7 @@ import 'package:smartvillage/UI/utilities/scaffold.dart';
 
 import '../API/api_manager.dart';
 import '../API/background_service_helper.dart';
+import '../API/notification_service.dart';
 
 class Salute extends StatefulWidget {
   Salute({super.key});
@@ -28,9 +29,6 @@ class SaluteState extends State<Salute> {
   void initState() {
     healthSync = APIManager.healthSync;
     lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;
-    HealthManager.readLastMeasurementsUpload().then((_) {
-      lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;
-    });
     super.initState();
   }
 
@@ -68,32 +66,7 @@ class SaluteState extends State<Salute> {
                 setState(() {
                   healthSync = gotPermissions;
                 });
-                Map<String,dynamic> allReads = await HealthManager.readData();
-                String uploadedId = await APIManager.uploadMeasurements(
-                  valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-                  valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-                  valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-                  valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-                  valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
-                  valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-                  valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-                  valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-                );
-                if(!uploadedId.contains("error_")) {
-                  APIManager.lastMeasurementID = uploadedId;
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  prefs.setString("lastMeasurementID", uploadedId);
-                  await HealthManager.readLastMeasurementsUpload();
-                  setState(() {lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;});
-                  //TODO: ENABLE BACKGROUND SERVICE
-                  print("UPLOADED: ${await APIManager.getLastMeasurements()}");
-                } else {
-                  if(context.mounted) {
-                    ErrorManager.uploadError(context);
-                  }
-                }
-                //LocalNotificationService.initialize();
-                //APIManager.initializeBackground();
+                await HealthManager.writeData();
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
@@ -135,8 +108,13 @@ class SaluteState extends State<Salute> {
             const Spacer(),
             AutoSizeText(
               maxLines: 1,
-              "Ultima sincronizzazione: ${lastMeasurementsUpload != null ? DateFormat("dd/MM/yyyy HH:mm:ss").format(lastMeasurementsUpload!) : "Nessuna"}",
-              style: TextStyle(fontSize: 17, color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray), textAlign: TextAlign.center,),
+              lastMeasurementsUpload != null && HealthManager.lastMeasurementsUpload != null ?
+              (lastMeasurementsUpload!.isAfter(HealthManager.lastMeasurementsUpload!) || lastMeasurementsUpload!.isAtSameMomentAs(HealthManager.lastMeasurementsUpload!) ?
+              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(lastMeasurementsUpload!)}" :
+              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(HealthManager.lastMeasurementsUpload!)}") :
+              "Ultima sincronizzazione: nessuna",
+              style: TextStyle(fontSize: 17, color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray), textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 10,),
             SmartVillageButton(
               text: "Sincronizza manualmente",
@@ -144,29 +122,7 @@ class SaluteState extends State<Salute> {
               big: false,
               onPressed: () async {
                 EasyLoading.show();
-                Map<String,dynamic> allReads = await HealthManager.readData();
-                String uploadedId = await APIManager.uploadMeasurements(
-                  valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-                  valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-                  valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-                  valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-                  valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
-                  valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-                  valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-                  valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-                );
-                if(!uploadedId.contains("error_")) {
-                  APIManager.lastMeasurementID = uploadedId;
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  prefs.setString("lastMeasurementID", uploadedId);
-                  await HealthManager.readLastMeasurementsUpload();
-                  setState(() {lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;});
-                  print("UPLOADED: ${await APIManager.getLastMeasurements()}");
-                } else {
-                  if(context.mounted) {
-                    ErrorManager.uploadError(context);
-                  }
-                }
+                await HealthManager.writeData();
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,

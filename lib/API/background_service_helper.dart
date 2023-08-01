@@ -1,8 +1,10 @@
 import 'package:background_fetch/background_fetch.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:health_kit_reporter/health_kit_reporter.dart';
+import 'package:health_kit_reporter/model/predicate.dart';
+import 'package:health_kit_reporter/model/type/quantity_type.dart';
+import 'package:health_kit_reporter/model/update_frequency.dart';
 import 'package:smartvillage/API/notification_service.dart';
 
-import 'api_manager.dart';
 import 'health_manager.dart';
 
 class BackgroundServiceHelper {
@@ -35,6 +37,7 @@ class BackgroundServiceHelper {
       }
     );
     print("Background status: $status");
+    await observerQuery();
   }
 
   static Future<void> stopService() async {
@@ -43,30 +46,30 @@ class BackgroundServiceHelper {
   }
 
   static Future<void> _onBackgroundUpdate() async {
-    HealthManager.healthSetup();
-    Map<String,dynamic> allReads = await HealthManager.readData();
-    String uploadedId = await APIManager.uploadMeasurements(
-      valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-      valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-      valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-      valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-      valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
-      valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-      valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-      valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-    );
-    if(!uploadedId.contains("error_")) {
-      APIManager.lastMeasurementID = uploadedId;
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString("lastMeasurementID", uploadedId);
-      await HealthManager.readLastMeasurementsUpload();
-      print("UPLOADED: ${await APIManager.getLastMeasurements()}");
-      LocalNotificationService.showNotification();
-    }
+    await HealthManager.writeData();
 
     BackgroundFetch.scheduleTask(TaskConfig(
         taskId: "com.transistorsoft.smartvillagefetch",
         delay: 90 * 1000  // <-- milliseconds
     ));
+  }
+
+  static Future<void> observerQuery() async {
+    final identifier = QuantityType.vo2Max.identifier;
+    final sub = HealthKitReporter.observerQuery(
+      [identifier],
+      Predicate(HealthManager.lastMeasurementsUpload ?? DateTime.now(), DateTime.now()),
+      onUpdate: (identifier) async {
+        print('Updates for observerQuerySub');
+        LocalNotificationService.initialize();
+        await HealthManager.writeData();
+      },
+    );
+    print('observerQuerySub: $sub');
+    final isSet = await HealthKitReporter.enableBackgroundDelivery(
+      identifier,
+      UpdateFrequency.immediate,
+    );
+    print('enableBackgroundDelivery: $isSet');
   }
 }

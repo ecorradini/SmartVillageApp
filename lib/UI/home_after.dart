@@ -10,9 +10,9 @@ class HomeAfter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    DateTime birth = DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(Utente.dataNascita);
+    //DateTime birth = DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(Utente.dataNascita);
     DateTime created = DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(Utente.created);
-    String dataNascita = DateFormat("dd/MM/yyyy").format(birth);
+    //String dataNascita = DateFormat("dd/MM/yyyy").format(birth);
     String dataCreated = DateFormat("dd/MM/yyyy").format(created);
     return SmartVillageScaffold(
       smallBar: true,
@@ -34,18 +34,21 @@ class HomeAfter extends StatelessWidget {
                 const SizedBox(height: 5,),
                 RoundedContainer(
                     widgets: [
-                      AutoSizeText("Data di nascita: $dataNascita", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
-                      AutoSizeText("Genere: ${Utente.genere}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
-                      AutoSizeText("Codice Esenzione: ${Utente.codiceEsenzione.isEmpty ? "Assente" : Utente.codiceEsenzione}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
+                      AutoSizeText("CF: ${Utente.codiceFiscale}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
+                      AutoSizeText(Utente.email, style: TextStyle(color: Theme.of(context).colorScheme.onTertiary))
+                      //AutoSizeText("Data di nascita: $dataNascita", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
+                      //AutoSizeText("Genere: ${Utente.genere}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
+                      //AutoSizeText("Codice Esenzione: ${Utente.codiceEsenzione.isEmpty ? "Assente" : Utente.codiceEsenzione}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary), minFontSize: 19,),
                     ]
                 ),
                 const Spacer(),
                 Text("Stato: ${Utente.stato}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
                 Text("Creato: $dataCreated", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
                 Text("ID: ${Utente.id}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
-                Text("Codice Pairing: ${Utente.pairingCode}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
-                Text("PIN: ${Utente.pin}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
-                const SizedBox(height: 10,)
+                Text("Abilitato: ${Utente.enabledAccount}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
+                //Text("Codice Pairing: ${Utente.pairingCode}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
+                //Text("PIN: ${Utente.pin}", style: TextStyle(color: Theme.of(context).colorScheme.onTertiary)),
+                const SizedBox(height: 40,)
               ],
             ),
           ],

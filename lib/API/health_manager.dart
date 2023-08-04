@@ -47,20 +47,19 @@ class HealthManager {
     List<Map<String,dynamic>> bloodPressureRateRead = _convertFromMapToList(await _readBloodPressure());
     List<Map<String,dynamic>> oxygenSaturationRead = _convertFromMapToList(await _readOxygenSaturation());
     List<Map<String,dynamic>> bmiRead = _convertFromMapToList(await _readBMI());
-    List<Map<String,dynamic>> bfpRead = _convertFromMapToList(await _readBFP());
     List<Map<String,dynamic>> lbmRead = _convertFromMapToList(await _readLBM());
     List<Map<String,dynamic>> weightRead = _convertFromMapToList(await _readWeight());
-    //TODO: ECG
+    List<Map<String,dynamic>> ecgRead = _convertECGFromMapToList(await _readECG());
+    await _readECG();
 
     Map<String,dynamic> res = {
       APIManager.HEART_RATE_IDENTIFIER: heartRateRead.isNotEmpty ? heartRateRead : null,
       APIManager.BLOOD_PRESSURE_IDENTIFIER: bloodPressureRateRead.isNotEmpty ? bloodPressureRateRead : null,
       APIManager.OXYGEN_SATURATION_IDENTIFIER: oxygenSaturationRead.isNotEmpty ? oxygenSaturationRead : null,
       APIManager.BODY_MASS_INDEX_IDENTIFIER: bmiRead.isNotEmpty ? bmiRead : null,
-      APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER: bfpRead.isNotEmpty ? bfpRead : null,
       APIManager.LEAN_BODY_MASS_IDENTIFIER: lbmRead.isNotEmpty ? lbmRead : null,
       APIManager.WEIGHT_IDENTIFIER: weightRead.isNotEmpty ? weightRead : null,
-      APIManager.ECG_IDENTIFIER: null //TODO: ECG
+      APIManager.ECG_IDENTIFIER: ecgRead.isNotEmpty ? ecgRead : null
     };
 
     return res;
@@ -75,7 +74,6 @@ class HealthManager {
       valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
       valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
       valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-      valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE_IDENTIFIER],
       valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
       valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
       valuesECG: allReads[APIManager.ECG_IDENTIFIER],
@@ -238,7 +236,13 @@ class HealthManager {
     return res;
   }
 
-  //TODO: ECG
+  static Future<Map<String,dynamic>> _readECG() async {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.ELECTROCARDIOGRAM, lastReadECG);
+    if(res.isNotEmpty) {
+      lastReadECG = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
+    }
+    return res;
+  }
 
   static Future<Map<String,dynamic>> _genericRead(HealthDataType type, DateTime? lastRead) async {
     Map<String,dynamic> res = {};
@@ -250,12 +254,34 @@ class HealthManager {
     List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(now.subtract(duration), now, [type]);
     for(HealthDataPoint point in healthData) {
       String dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateFrom);
-      int value0 = double.parse(point.value.toString()).toInt();
-      String deviceId = point.deviceId;
-      res[dateTime] = {
-        "value0": value0,
-        "device": deviceId
-      };
+      if (point.value is ElectrocardiogramHealthValue) {
+        ElectrocardiogramHealthValue ecgValue = point.value as ElectrocardiogramHealthValue;
+        List<num> voltageValues = ecgValue.voltageValues.map((v) => v.voltage).toList();
+        num averageHeartRate = ecgValue.averageHeartRate ?? 0;
+        /***
+         *  NOT_SET: The classification is not set.
+            SINUS_RHYTHM: The ECG shows a sinus rhythm, which is a normal heart rhythm.
+            ATRIAL_FIBRILLATION: The ECG shows atrial fibrillation, which is an irregular and often rapid heart rate.
+            INCONCLUSIVE_LOW_HEART_RATE: The ECG is inconclusive due to a low heart rate.
+            INCONCLUSIVE_HIGH_HEART_RATE: The ECG is inconclusive due to a high heart rate.
+            INCONCLUSIVE_POOR_READING: The ECG is inconclusive due to a poor reading.
+            INCONCLUSIVE_OTHER: The ECG is inconclusive due to other reasons.
+            UNRECOGNIZED: The ECG shows an unrecognized rhythm.
+         */
+        ElectrocardiogramClassification classification = ecgValue.classification;
+        res[dateTime] = {
+          "values": voltageValues,
+          "averageHR": averageHeartRate,
+          "classification": classification.value,
+          "val_qnt": voltageValues.length
+        };
+      } else {
+        int value0 = double.parse(point.value.toString()).toInt();
+        res[dateTime] = {
+          "value0": value0,
+          "device": point.deviceId
+        };
+      }
     }
     return res;
   }
@@ -269,6 +295,19 @@ class HealthManager {
         if((source[date] as Map<String,dynamic>).containsKey("value1")) "value1": source[date]["value1"],
         if(!(source[date] as Map<String,dynamic>).containsKey("value1"))"value1": null,
         "device": source[date]["device"]
+      });
+    }
+    return res;
+  }
+
+  static List<Map<String,dynamic>> _convertECGFromMapToList(Map<String,dynamic> source) {
+    List<Map<String,dynamic>> res = [];
+    for(String date in source.keys) {
+      res.add({
+        "values": source[date]["values"],
+        "classification": source[date]["classification"],
+        "averageHR": source[date]["averageHR"],
+        "val_qnt": source[date]["val_qnt"],
       });
     }
     return res;

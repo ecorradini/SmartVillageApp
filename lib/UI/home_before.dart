@@ -7,6 +7,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
+import 'package:smartvillage/API/background_service_helper.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 import 'package:smartvillage/UI/utilities/textfield.dart';
@@ -22,7 +23,7 @@ class HomeBeforeState extends State<HomeBefore> {
 
   final _emailTextController = TextEditingController();
   final _passwordTextController = TextEditingController();
-  final _cfTextController = TextEditingController();
+  //final _cfTextController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -73,14 +74,14 @@ class HomeBeforeState extends State<HomeBefore> {
                           placeholder: "Password",
                           context: context,
                         ),
-                        const SizedBox(height: 10,),
+                        /*const SizedBox(height: 10,),
                         SmartVillageTextFieldWithIcon(
                           icon: CupertinoIcons.creditcard,
                           controller: _cfTextController,
                           keyboardType: TextInputType.text,
                           placeholder: "Codice Fiscale",
                           context: context,
-                        ),
+                        ),*/
                       ],
                     ),
                   ),
@@ -97,14 +98,14 @@ class HomeBeforeState extends State<HomeBefore> {
                         bool logged = await APIManager.login(
                             email: _emailTextController.text.trim(),
                             password: _passwordTextController.text.trim(),
-                            codiceFiscale: _cfTextController.text.trim(),
+                            //codiceFiscale: _cfTextController.text.trim(),
                             prefs: prefs,
                             context: context
                         );
                         EasyLoading.dismiss();
                         if (logged && context.mounted) {
                           if(APIManager.autoSync) {
-                            //APIManager.initializeBackground();
+                            BackgroundServiceHelper.enableBackgroundService();
                           }
                           Phoenix.rebirth(context);
                         }

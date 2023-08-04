@@ -78,9 +78,9 @@ class SmartVillageAppState extends State<SmartVillageApp> {
     //Prendo dati login
     String? email = prefs.getString("email");
     String? password = prefs.getString("password");
-    String? codiceFiscale = prefs.getString("codiceFiscale");
+    //String? codiceFiscale = prefs.getString("codiceFiscale");
     //Se dati esistono allora loggo, altrimenti no
-    if(email == null || password == null || codiceFiscale == null) {
+    if(email == null || password == null) {// || codiceFiscale == null) {
       return false;
     }
     else {
@@ -88,7 +88,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
       bool logged = await APIManager.login(
           email: email,
           password: password,
-          codiceFiscale: codiceFiscale,
+          //codiceFiscale: codiceFiscale,
           prefs: prefs,
           context: context
       );

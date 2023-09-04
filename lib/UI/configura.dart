@@ -2,9 +2,11 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
+import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
@@ -79,12 +81,9 @@ class ConfiguraState extends State<Configura> {
                 onPressed: () async {
                   EasyLoading.show();
                   FocusManager.instance.primaryFocus?.unfocus();
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  prefs.remove("email");
-                  prefs.remove("password");
-                  prefs.remove("codiceFiscale");
+                  await _logout();
                   EasyLoading.dismiss();
-
+                  if(context.mounted) Phoenix.rebirth(context);
                 },
                 color: Theme.of(context).colorScheme.error,
                 textColor: Theme.of(context).colorScheme.onError,
@@ -95,8 +94,12 @@ class ConfiguraState extends State<Configura> {
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Elimina account e dati",
-                onPressed: () {
+                onPressed: () async {
+                  EasyLoading.show();
                   FocusManager.instance.primaryFocus?.unfocus();
+                  await _logout();
+                  EasyLoading.dismiss();
+                  if(context.mounted) Phoenix.rebirth(context);
                 },
                 color: Theme.of(context).colorScheme.error,
                 textColor: Theme.of(context).colorScheme.onError,
@@ -106,5 +109,16 @@ class ConfiguraState extends State<Configura> {
           ],
         ),
     );
+  }
+
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove("email");
+    prefs.remove("password");
+    prefs.remove("loggedFromTest");
+    prefs.remove("healthSync");
+    prefs.remove("autoSync");
+    prefs.remove("logged");
+    HealthManager.revokePermissions();
   }
 }

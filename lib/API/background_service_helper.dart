@@ -57,8 +57,17 @@ class BackgroundServiceHelper {
   static Future<void> observerQuery() async {
     final identifier = QuantityType.vo2Max.identifier;
     final sub = HealthKitReporter.observerQuery(
-      [identifier],
-      Predicate(HealthManager.lastMeasurementsUpload ?? DateTime.now(), DateTime.now()),
+      [
+        QuantityType.heartRate.identifier,
+        QuantityType.vo2Max.identifier,
+        QuantityType.bloodPressureDiastolic.identifier,
+        QuantityType.bloodPressureSystolic.identifier,
+        QuantityType.oxygenSaturation.identifier,
+        QuantityType.bodyMassIndex.identifier,
+        QuantityType.bodyFatPercentage.identifier,
+        QuantityType.bodyMass.identifier,
+      ],
+      Predicate(DateTime.now().add(const Duration(seconds: -180)), DateTime.now()),
       onUpdate: (identifier) async {
         print('Updates for observerQuerySub');
         LocalNotificationService.initialize();

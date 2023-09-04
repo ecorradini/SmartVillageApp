@@ -29,13 +29,17 @@ class HealthManager {
     HealthDataType.BODY_MASS_INDEX,
     HealthDataType.BODY_FAT_PERCENTAGE,
     HealthDataType.WEIGHT,
-    HealthDataType.ELECTROCARDIOGRAM
+    HealthDataType.ELECTROCARDIOGRAM,
   ];
 
   static void healthSetup() {
     //Richiedo uso Health
     healthFactory = HealthFactory(useHealthConnectIfAvailable: true);
   }
+
+  static void revokePermissions() async {
+    await healthFactory?.revokePermissions();
+}
 
   //Richiedo permesso uso HealthKit
   static Future<bool> requestPermissions() async {
@@ -82,10 +86,11 @@ class HealthManager {
       lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
       await _saveLastDates();
       print("LAST UPLOADED: $lastDate");
+      LocalNotificationService.showNotification("Dati sincronizzati");
     } else {
       LocalNotificationService.showNotification('Errore $lastDate');
     }
-    await BackgroundServiceHelper.enableBackgroundService();
+    //await BackgroundServiceHelper.enableBackgroundService();
   }
 
   static Future<void> _saveLastDates() async {
@@ -155,7 +160,11 @@ class HealthManager {
       lastReadECG = DateFormat("yyyy-MM-dd HH:mm:ss").parse(lastReadECGS);
     }
     if(lastMeasurementsDate != null) {
-      lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastMeasurementsDate);
+      try {
+        lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastMeasurementsDate);
+      } catch(_) {
+        lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastMeasurementsDate);
+      }
     }
   }
 
@@ -197,14 +206,6 @@ class HealthManager {
     Map<String,dynamic> res = await _genericRead(HealthDataType.BODY_MASS_INDEX, lastReadBMI);
     if(res.isNotEmpty) {
       lastReadBMI = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
-    return res;
-  }
-
-  static Future<Map<String,dynamic>> _readBFP() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.BODY_FAT_PERCENTAGE, lastReadBFP);
-    if(res.isNotEmpty) {
-      lastReadBFP = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
     }
     return res;
   }

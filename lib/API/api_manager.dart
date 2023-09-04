@@ -146,8 +146,7 @@ class APIManager {
         hook: "measurements"
     );
     if(res.containsKey("data")) {
-      return res["data"]![res["data"].length-1]["uploadDate"];
-      //return DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
+      return res["created"]!;
     }
     else if(res.containsKey("errors")) {
       return "error_${res["errors"]![0]["type"] ?? "Unknown"}";

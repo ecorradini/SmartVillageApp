@@ -55,6 +55,10 @@ class ErrorManager {
     _showSimpleErrorDialog(context, "È avvenuto un errore durante la sincronizzazione. Per favore, riprova più tardi.");
   }
 
+  static void deleteAccountError(BuildContext context) {
+    _showSimpleErrorDialog(context, "Abbiamo preso in carico la tua richiesta.\n\nRiceverai una mail non appena l'eliminazione sarà conclusa.");
+  }
+
   static void _showSimpleErrorDialog(BuildContext context, String text) {
     showCupertinoModalPopup<void>(
       context: context,
@@ -72,5 +76,9 @@ class ErrorManager {
         ],
       ),
     );
+  }
+
+  static void _showChoiceDialog(BuildContext context, String text) {
+
   }
 }

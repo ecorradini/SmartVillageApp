@@ -69,6 +69,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
     APIManager.autoSync = prefs.getBool("autoSync") ?? true;
     if(res["logged"] && APIManager.healthSync && APIManager.autoSync) {
       await HealthManager.writeData();
+      await BackgroundServiceHelper.enableBackgroundService();
     }
 
     return res;

@@ -23,12 +23,10 @@ class Salute extends StatefulWidget {
 class SaluteState extends State<Salute> {
 
   bool healthSync = false;
-  DateTime? lastMeasurementsUpload;
 
   @override
   void initState() {
     healthSync = APIManager.healthSync;
-    lastMeasurementsUpload = HealthManager.lastMeasurementsUpload;
     super.initState();
   }
 
@@ -67,6 +65,7 @@ class SaluteState extends State<Salute> {
                   healthSync = gotPermissions;
                 });
                 await HealthManager.writeData();
+                await BackgroundServiceHelper.enableBackgroundService();
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
@@ -108,10 +107,8 @@ class SaluteState extends State<Salute> {
             const Spacer(),
             AutoSizeText(
               maxLines: 1,
-              lastMeasurementsUpload != null && HealthManager.lastMeasurementsUpload != null ?
-              (lastMeasurementsUpload!.isAfter(HealthManager.lastMeasurementsUpload!) || lastMeasurementsUpload!.isAtSameMomentAs(HealthManager.lastMeasurementsUpload!) ?
-              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(lastMeasurementsUpload!)}" :
-              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(HealthManager.lastMeasurementsUpload!)}") :
+              HealthManager.lastMeasurementsUpload != null ?
+              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(HealthManager.lastMeasurementsUpload!)}" :
               "Ultima sincronizzazione: nessuna",
               style: TextStyle(fontSize: 17, color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray), textAlign: TextAlign.center,
             ),

@@ -1,4 +1,5 @@
 class Utente {
+  static bool logged = false;
   static String nome = "";
   static String cognome = "";
   static String email = "";

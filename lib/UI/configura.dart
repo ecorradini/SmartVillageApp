@@ -11,6 +11,8 @@ import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
+import '../API/user.dart';
+
 class Configura extends StatefulWidget {
   final bool? loggedFromTest;
   final bool? logged;
@@ -74,7 +76,7 @@ class ConfiguraState extends State<Configura> {
                 ]
             ),
             const Spacer(),
-            Padding(
+            if(Utente.logged) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Esci dall'app",
@@ -90,7 +92,7 @@ class ConfiguraState extends State<Configura> {
               ),
             ),
             const SizedBox(height: 10,),
-            Padding(
+            if(Utente.logged) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Elimina account e dati",

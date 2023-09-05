@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/API/background_service_helper.dart';
 import 'package:smartvillage/API/health_manager.dart';
+import 'package:smartvillage/API/user.dart';
 import 'package:smartvillage/UI/loading_splash.dart';
 import 'package:smartvillage/UI/main_navigation.dart';
 import 'package:upgrader/upgrader.dart';
@@ -61,6 +61,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
 
     //LOGIN
     res["logged"] = await autoLogin(prefs);
+    Utente.logged = res["logged"];
     res["loggedFromTest"] = prefs.getBool("loggedFromTest");
 
     //Setup Health

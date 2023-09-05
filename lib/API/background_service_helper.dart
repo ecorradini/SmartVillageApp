@@ -47,6 +47,7 @@ class BackgroundServiceHelper {
 
   static Future<void> _onBackgroundUpdate() async {
     await HealthManager.writeData();
+    LocalNotificationService.showNotification("Dati sincronizzati in background.");
 
     BackgroundFetch.scheduleTask(TaskConfig(
         taskId: "com.transistorsoft.smartvillagefetch",
@@ -72,6 +73,7 @@ class BackgroundServiceHelper {
         print('Updates for observerQuerySub');
         LocalNotificationService.initialize();
         await HealthManager.writeData();
+        LocalNotificationService.showNotification("Dati sincronizzati in background.");
       },
     );
     print('observerQuerySub: $sub');

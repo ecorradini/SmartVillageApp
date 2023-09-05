@@ -86,7 +86,6 @@ class HealthManager {
       lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
       await _saveLastDates();
       print("LAST UPLOADED: $lastDate");
-      LocalNotificationService.showNotification("Dati sincronizzati");
     } else {
       LocalNotificationService.showNotification('Errore $lastDate');
     }

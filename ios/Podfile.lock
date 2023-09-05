@@ -1,7 +1,7 @@
 PODS:
   - app_tracking_transparency (0.0.1):
     - Flutter
-  - background_fetch (1.2.0):
+  - background_fetch (1.2.1):
     - Flutter
   - device_info_plus (0.0.1):
     - Flutter
@@ -73,7 +73,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   app_tracking_transparency: 5b1745ef9ade815f7455cb6a0848349589afb7c5
-  background_fetch: 79229f3677f19e1851b8e46d051720842e25a7fc
+  background_fetch: 896944864b038d2837fc750d470e9841e1e6a363
   device_info_plus: 7545d84d8d1b896cb16a4ff98c19f07ec4b298ea
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743

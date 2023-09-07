@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/API/background_service_helper.dart';
@@ -11,9 +14,9 @@ import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/API/user.dart';
 import 'package:smartvillage/UI/loading_splash.dart';
 import 'package:smartvillage/UI/main_navigation.dart';
-import 'package:upgrader/upgrader.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:wakelock/wakelock.dart';
 
 import 'API/notification_service.dart';
 
@@ -33,13 +36,39 @@ class SmartVillageApp extends StatefulWidget {
   SmartVillageAppState createState() => SmartVillageAppState();
 }
 
-class SmartVillageAppState extends State<SmartVillageApp> {
+class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObserver {
   late Future<Map<String,dynamic>> initValues;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch(state) {
+      case AppLifecycleState.resumed:
+        print("app in resumed");
+        Wakelock.enable();
+        if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
+          BackgroundServiceHelper.enableBackgroundService();
+        }
+        break;
+      case AppLifecycleState.inactive:
+        print("app in inactive");
+        Wakelock.disable();
+        break;
+      case AppLifecycleState.paused:
+        print("app in paused");
+        Wakelock.disable();
+        break;
+      case AppLifecycleState.detached:
+        print("app in detached");
+        Wakelock.disable();
+        break;
+    }
+  }
+
+  @override
   void initState() {
-    initValues = init();
     super.initState();
+    initValues = init();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -68,9 +97,16 @@ class SmartVillageAppState extends State<SmartVillageApp> {
     HealthManager.healthSetup();
     APIManager.healthSync = prefs.getBool("healthSync") ?? false;
     APIManager.autoSync = prefs.getBool("autoSync") ?? true;
-    if(res["logged"] && APIManager.healthSync && APIManager.autoSync) {
-      await HealthManager.writeData();
-      await BackgroundServiceHelper.enableBackgroundService();
+    String? lastMeasurementsDate = prefs.getString("lastDate");
+    if(lastMeasurementsDate != null) {
+      try {
+        HealthManager.lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastMeasurementsDate);
+      } catch(_) {
+        HealthManager.lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastMeasurementsDate);
+      }
+    }
+    if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
+      BackgroundServiceHelper.enableBackgroundService();
     }
 
     return res;
@@ -144,10 +180,7 @@ class SmartVillageAppState extends State<SmartVillageApp> {
             ..dismissOnTap = false;
           if(snapshot.hasData) {
             Map<String,dynamic> currentValues = snapshot.data!;
-            return UpgradeAlert(
-                upgrader: Upgrader(dialogStyle: UpgradeDialogStyle.cupertino),
-                child: MainNavigation(initValues: currentValues,),
-            );
+            return MainNavigation(initValues: currentValues,);
           } else if(snapshot.connectionState == ConnectionState.waiting) {
             //LOADING SPLASH
             return LoadingSplashScreen();

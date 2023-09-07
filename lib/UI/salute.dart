@@ -6,12 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
-import 'package:smartvillage/UI/utilities/error_manager.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
 import '../API/api_manager.dart';
 import '../API/background_service_helper.dart';
-import '../API/notification_service.dart';
 
 class Salute extends StatefulWidget {
   Salute({super.key});
@@ -64,8 +62,9 @@ class SaluteState extends State<Salute> {
                 setState(() {
                   healthSync = gotPermissions;
                 });
-                await HealthManager.writeData();
-                await BackgroundServiceHelper.enableBackgroundService();
+                if(!BackgroundServiceHelper.enabled) {
+                  BackgroundServiceHelper.enableBackgroundService();
+                }
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
@@ -83,7 +82,7 @@ class SaluteState extends State<Salute> {
                     // This is called when the user toggles the switch.
                     setState(() {
                       APIManager.autoSync = value ?? false;
-                      if(value ?? false) {
+                      if((value ?? false) && !BackgroundServiceHelper.enabled) {
                         BackgroundServiceHelper.enableBackgroundService();
                       } else {
                         BackgroundServiceHelper.stopService();

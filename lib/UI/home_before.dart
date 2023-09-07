@@ -104,9 +104,6 @@ class HomeBeforeState extends State<HomeBefore> {
                         );
                         EasyLoading.dismiss();
                         if (logged && context.mounted) {
-                          if(APIManager.autoSync) {
-                            BackgroundServiceHelper.enableBackgroundService();
-                          }
                           Phoenix.rebirth(context);
                         }
                       }

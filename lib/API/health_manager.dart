@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 
-import 'background_service_helper.dart';
 import 'notification_service.dart';
 
 class HealthManager {
@@ -31,6 +30,8 @@ class HealthManager {
     HealthDataType.WEIGHT,
     HealthDataType.ELECTROCARDIOGRAM,
   ];
+
+  static bool currentlyUploading = false;
 
   static void healthSetup() {
     //Richiedo uso Health
@@ -70,24 +71,27 @@ class HealthManager {
   }
 
   static Future<void> writeData()  async {
-    healthSetup();
-    _readLastDates();
-    Map<String,dynamic> allReads = await _readData();
-    String lastDate = await APIManager.uploadMeasurements(
-      valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
-      valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
-      valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
-      valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
-      valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
-      valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-      valuesECG: allReads[APIManager.ECG_IDENTIFIER],
-    );
-    if(!lastDate.contains("error_")) {
-      lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
-      await _saveLastDates();
-      print("LAST UPLOADED: $lastDate");
-    } else {
-      LocalNotificationService.showNotification('Errore $lastDate');
+    if(!currentlyUploading) {
+      currentlyUploading = true;
+      healthSetup();
+      _readLastDates();
+      Map<String, dynamic> allReads = await _readData();
+      String lastDate = await APIManager.uploadMeasurements(
+        valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
+        valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
+        valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
+        valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
+        valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+        valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
+        valuesECG: allReads[APIManager.ECG_IDENTIFIER],
+      );
+      if (!lastDate.contains("error_")) {
+        lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
+        await _saveLastDates();
+        print("LAST UPLOADED: $lastDate");
+        LocalNotificationService.showNotification("Dati sincronizzati in background.");
+      }
+      currentlyUploading = false;
     }
     //await BackgroundServiceHelper.enableBackgroundService();
   }

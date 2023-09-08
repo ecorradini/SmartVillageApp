@@ -56,7 +56,7 @@ class BackgroundServiceHelper {
     uploadTimer = Timer.periodic(const Duration(seconds: 180), (timer) {
       print("TIMER");
       HealthManager.writeData();
-      _startBackgroundTimer();
+      //_startBackgroundTimer();
     });
   }
 

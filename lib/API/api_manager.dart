@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/user.dart';
 
@@ -106,15 +107,60 @@ class APIManager {
     }
   }
 
-  /*static Future<String> getPatient(String codiceFiscale) async {
-    Map<String,dynamic> res = await _getData(hook: "patients/fiscal/$codiceFiscale");
-    if(res.containsKey("data")) {
-      return jsonEncode(res);
-    } else if(res.containsKey("errors")) {
-      return "error_${res["errors"]![0]["TYPE"] ?? "Unknown"}";
-    } else {
-      return ErrorManager.ERROR_UNKOWN;
+  /*static Future<String> getLastUploadDate() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? lastMeasurementsId = prefs.getString("lastMeasurementsId");
+    if(lastMeasurementsId != null) {
+      Map<String, dynamic> last = await _getData(hook: "measurements/$lastMeasurementsId");
+      List allData = last["data"];
+      return DateFormat("yyyy-MM-dd HH:mm:ss").format(DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(allData[0]["uploadDate"]));
     }
+    else {
+      return DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now().subtract(const Duration(minutes: 30)));
+    }
+  }*/
+
+  /*static Future<Map<String, dynamic>> _downloadLastMeasurements() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? lastMeasurementsId = prefs.getString("lastMeasurementsId");
+    if(lastMeasurementsId != null) {
+      Map<String, dynamic> last = await _getData(hook: "measurements/$lastMeasurementsId");
+      List allData = last["data"];
+      Map<String, dynamic> res = {};
+      for(Map<String,dynamic> data in allData) {
+        String identifier = data["prettyId"];
+        String date = DateFormat("yyyy-MM-dd HH:mm:ss").format(DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(data["date"]));
+        if(res.containsKey(identifier)) {
+          (res[identifier] as List<String>).add(date);
+        } else {
+          res[identifier] = [date];
+        }
+      }
+      return res;
+    }
+    else {
+      return {};
+    }
+  }
+
+  static Map<String,dynamic> _removeDuplicates(Map<String,dynamic> data, Map<String, dynamic> lastMeasurements) {
+    Map<String,dynamic> res = {};
+    for(String identifier in data.keys) {
+      List<String>? alreadyUploadedDates = lastMeasurements[identifier];
+      for(Map<String, dynamic> measurement in data[identifier]) {
+        print(measurement);
+        String currentDate = measurement["date"];
+        if(alreadyUploadedDates == null || !alreadyUploadedDates.contains(currentDate)) {
+          if(res.containsKey(identifier)) {
+            (res[identifier] as List<Map<String, dynamic>>).add(measurement);
+          }
+          else {
+            res[identifier] = [measurement];
+          }
+        }
+      }
+    }
+    return res;
   }*/
 
   static Future<String> uploadMeasurements({
@@ -135,23 +181,30 @@ class APIManager {
       if(valuesW != null) WEIGHT_IDENTIFIER: valuesW,
       if(valuesECG != null) ECG_IDENTIFIER: valuesECG
     };
-    Map<String,dynamic> parameters = {
-      "patient": {
-        "fiscalCode": Utente.codiceFiscale
-      },
-      "data": data,
-    };
-    Map<String,dynamic> res = await _postData(
-        parameters: parameters,
-        hook: "measurements"
-    );
-    if(res.containsKey("data")) {
-      return res["created"]!;
-    }
-    else if(res.containsKey("errors")) {
-      return "error_${res["errors"]![0]["type"] ?? "Unknown"}";
-    }
-    else {
+    print("TO UPLOAD $data");
+    if(data.isNotEmpty) {
+      Map<String, dynamic> parameters = {
+        "patient": {
+          "fiscalCode": Utente.codiceFiscale
+        },
+        "data": data,
+      };
+      Map<String, dynamic> res = await _postData(
+          parameters: parameters,
+          hook: "measurements"
+      );
+      if (res.containsKey("data")) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString("lastMeasurementsId", res["data"]["id"].toString());
+        return res["created"]!;
+      }
+      else if (res.containsKey("errors")) {
+        return "error_${res["errors"]![0]["type"] ?? "Unknown"}";
+      }
+      else {
+        return ErrorManager.ERROR_UNKOWN;
+      }
+    } else {
       return ErrorManager.ERROR_UNKOWN;
     }
   }

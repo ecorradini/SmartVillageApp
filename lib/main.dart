@@ -47,6 +47,8 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
         Wakelock.enable();
         if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
           BackgroundServiceHelper.enableBackgroundService();
+        } else if(Utente.logged && APIManager.healthSync && APIManager.autoSync) {
+          HealthManager.writeData();
         }
         break;
       case AppLifecycleState.inactive:
@@ -163,7 +165,14 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
         fontFamily: 'ArialRoundedMT',
         useMaterial3: true,
       ),
-      builder: EasyLoading.init(),
+      builder: EasyLoading.init(
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaleFactor: 1.0, boldText: false),
+            child: child!,
+          );
+        },
+      ),
       home: FutureBuilder(
         future: initValues,
         builder: (context, snapshot) {

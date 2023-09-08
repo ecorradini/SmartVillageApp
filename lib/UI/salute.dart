@@ -54,7 +54,7 @@ class SaluteState extends State<Salute> {
               enabled: !healthSync,
               big: false,
               onPressed: () async {
-                EasyLoading.show();
+                await EasyLoading.show();
                 bool gotPermissions = await HealthManager.requestPermissions();
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setBool("healthSync", gotPermissions);
@@ -65,7 +65,7 @@ class SaluteState extends State<Salute> {
                 if(!BackgroundServiceHelper.enabled) {
                   BackgroundServiceHelper.enableBackgroundService();
                 }
-                EasyLoading.dismiss();
+                await EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
             ),

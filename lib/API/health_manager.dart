@@ -8,16 +8,6 @@ import 'notification_service.dart';
 class HealthManager {
 
   static HealthFactory? healthFactory;
-
-  static DateTime? lastReadHeartRate;
-  static DateTime? lastReadBloodPressure;
-  static DateTime? lastReadOxygenSaturation;
-  static DateTime? lastReadBMI;
-  static DateTime? lastReadBFP;
-  static DateTime? lastReadLBM;
-  static DateTime? lastReadWeight;
-  static DateTime? lastReadECG;
-
   static DateTime? lastMeasurementsUpload;
 
   static var types = [
@@ -55,7 +45,6 @@ class HealthManager {
     List<Map<String,dynamic>> lbmRead = _convertFromMapToList(await _readLBM());
     List<Map<String,dynamic>> weightRead = _convertFromMapToList(await _readWeight());
     List<Map<String,dynamic>> ecgRead = _convertECGFromMapToList(await _readECG());
-    await _readECG();
 
     Map<String,dynamic> res = {
       APIManager.HEART_RATE_IDENTIFIER: heartRateRead.isNotEmpty ? heartRateRead : null,
@@ -74,8 +63,9 @@ class HealthManager {
     if(!currentlyUploading) {
       currentlyUploading = true;
       healthSetup();
-      _readLastDates();
-      Map<String, dynamic> allReads = await _readData();
+      //await _readLastDates();
+      //String lastUploadDate = await APIManager.getLastUploadDate();
+      Map<String, dynamic> allReads = await _readData();//lastUploadDate);
       String lastDate = await APIManager.uploadMeasurements(
         valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
         valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
@@ -86,17 +76,24 @@ class HealthManager {
         valuesECG: allReads[APIManager.ECG_IDENTIFIER],
       );
       if (!lastDate.contains("error_")) {
-        lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
-        await _saveLastDates();
+        //await _saveLastDates();
+        try {
+          lastMeasurementsUpload =
+              DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
+        } catch (_) {
+          lastMeasurementsUpload =
+              DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastDate);
+        }
         print("LAST UPLOADED: $lastDate");
-        LocalNotificationService.showNotification("Dati sincronizzati in background.");
+        LocalNotificationService.showNotification(
+            "Dati sincronizzati in background.");
       }
       currentlyUploading = false;
     }
     //await BackgroundServiceHelper.enableBackgroundService();
   }
 
-  static Future<void> _saveLastDates() async {
+  /*static Future<void> _saveLastDates() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     if(lastReadHeartRate != null) {
       prefs.setString("lastReadHeartRate", DateFormat("yyyy-MM-dd HH:mm:ss").format(lastReadHeartRate!));
@@ -169,19 +166,19 @@ class HealthManager {
         lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastMeasurementsDate);
       }
     }
-  }
+  }*/
 
   static Future<Map<String,dynamic>> _readHeartRate() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.HEART_RATE, lastReadHeartRate);
-    if(res.isNotEmpty) {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.HEART_RATE);
+    /*if(res.isNotEmpty) {
       lastReadHeartRate = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readBloodPressure() async {
-    Map<String,dynamic> res1 = await _genericRead(HealthDataType.BLOOD_PRESSURE_SYSTOLIC, lastReadBloodPressure);
-    Map<String,dynamic> res2 = await _genericRead(HealthDataType.BLOOD_PRESSURE_DIASTOLIC, lastReadBloodPressure);
+    Map<String,dynamic> res1 = await _genericRead(HealthDataType.BLOOD_PRESSURE_SYSTOLIC);
+    Map<String,dynamic> res2 = await _genericRead(HealthDataType.BLOOD_PRESSURE_DIASTOLIC);
     //Metto DIASTOLIC in value1 di un dizionario complessivo.
     Map<String,dynamic> res = {};
     for(String date in res1.keys) {
@@ -191,31 +188,31 @@ class HealthManager {
         "value1": res2[date]["value0"]
       };
     }
-    if(res.isNotEmpty) {
+    /*if(res.isNotEmpty) {
       lastReadBloodPressure = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readOxygenSaturation() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.BLOOD_OXYGEN, lastReadOxygenSaturation);
-    if(res.isNotEmpty) {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.BLOOD_OXYGEN);
+    /*if(res.isNotEmpty) {
       lastReadOxygenSaturation = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readBMI() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.BODY_MASS_INDEX, lastReadBMI);
-    if(res.isNotEmpty) {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.BODY_MASS_INDEX);
+    /*if(res.isNotEmpty) {
       lastReadBMI = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readLBM() async {
-    Map<String,dynamic> resW = await _genericRead(HealthDataType.WEIGHT, lastReadLBM);
-    Map<String,dynamic> resBFP = await _genericRead(HealthDataType.BODY_FAT_PERCENTAGE, lastReadLBM);
+    Map<String,dynamic> resW = await _genericRead(HealthDataType.WEIGHT);
+    Map<String,dynamic> resBFP = await _genericRead(HealthDataType.BODY_FAT_PERCENTAGE);
     Map<String,dynamic> res = {};
     for(String date in resW.keys) {
       double weight = resW[date]["value0"];
@@ -226,65 +223,78 @@ class HealthManager {
         "value0": lbm
       };
     }
-    if(res.isNotEmpty) {
+    /*if(res.isNotEmpty) {
       lastReadLBM = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readWeight() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.WEIGHT, lastReadWeight);
-    if(res.isNotEmpty) {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.WEIGHT);
+    /*if(res.isNotEmpty) {
       lastReadWeight = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
   static Future<Map<String,dynamic>> _readECG() async {
-    Map<String,dynamic> res = await _genericRead(HealthDataType.ELECTROCARDIOGRAM, lastReadECG);
-    if(res.isNotEmpty) {
+    Map<String,dynamic> res = await _genericRead(HealthDataType.ELECTROCARDIOGRAM);
+    /*if(res.isNotEmpty) {
       lastReadECG = DateFormat("yyyy-MM-dd HH:mm:ss").parse(res.keys.first);
-    }
+    }*/
     return res;
   }
 
-  static Future<Map<String,dynamic>> _genericRead(HealthDataType type, DateTime? lastRead) async {
+  static Future<DateTime> _getLastDatePerType(String type) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? date = prefs.getString(type);
+    if(date != null) {
+      return DateFormat("yyyy-MM-dd HH:mm:ss").parse(date).add(const Duration(seconds: 1));
+    } else {
+      return DateTime.now().subtract(const Duration(minutes: 30));
+    }
+  }
+
+  static Future<Map<String,dynamic>> _genericRead(HealthDataType type) async {
     Map<String,dynamic> res = {};
     DateTime now = DateTime.now();
-    Duration duration = const Duration(days: 1);
-    if(lastRead != null) {
-      duration = now.difference(lastRead);
-    }
-    List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(now.subtract(duration), now, [type]);
-    for(HealthDataPoint point in healthData) {
-      String dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateFrom);
-      if (point.value is ElectrocardiogramHealthValue) {
-        ElectrocardiogramHealthValue ecgValue = point.value as ElectrocardiogramHealthValue;
-        List<num> voltageValues = ecgValue.voltageValues.map((v) => v.voltage).toList();
-        num averageHeartRate = ecgValue.averageHeartRate ?? 0;
-        /***
-         *  NOT_SET: The classification is not set.
-            SINUS_RHYTHM: The ECG shows a sinus rhythm, which is a normal heart rhythm.
-            ATRIAL_FIBRILLATION: The ECG shows atrial fibrillation, which is an irregular and often rapid heart rate.
-            INCONCLUSIVE_LOW_HEART_RATE: The ECG is inconclusive due to a low heart rate.
-            INCONCLUSIVE_HIGH_HEART_RATE: The ECG is inconclusive due to a high heart rate.
-            INCONCLUSIVE_POOR_READING: The ECG is inconclusive due to a poor reading.
-            INCONCLUSIVE_OTHER: The ECG is inconclusive due to other reasons.
-            UNRECOGNIZED: The ECG shows an unrecognized rhythm.
-         */
-        ElectrocardiogramClassification classification = ecgValue.classification;
-        res[dateTime] = {
-          "values": voltageValues,
-          "averageHR": averageHeartRate,
-          "classification": classification.value,
-          "val_qnt": voltageValues.length
-        };
-      } else {
-        int value0 = double.parse(point.value.toString()).toInt();
-        res[dateTime] = {
-          "value0": value0,
-          "device": point.deviceId
-        };
+    DateTime lastMeasureDate = await _getLastDatePerType(type.name);
+    print("${type.name} reading data from: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(lastMeasureDate)} to ${DateFormat("yyyy-MM-dd HH:mm:ss").format(now)}");
+    List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, now, [type]);
+    if(healthData.isNotEmpty) {
+      healthData.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString(type.name, DateFormat("yyyy-MM-dd HH:mm:ss").format(healthData.first.dateFrom));
+      for (HealthDataPoint point in healthData) {
+        String dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateFrom);
+        if (point.value is ElectrocardiogramHealthValue) {
+          ElectrocardiogramHealthValue ecgValue = point.value as ElectrocardiogramHealthValue;
+          List<num> voltageValues = ecgValue.voltageValues.map((v) => v.voltage).toList();
+          num averageHeartRate = ecgValue.averageHeartRate ?? 0;
+          /***
+           *  NOT_SET: The classification is not set.
+              SINUS_RHYTHM: The ECG shows a sinus rhythm, which is a normal heart rhythm.
+              ATRIAL_FIBRILLATION: The ECG shows atrial fibrillation, which is an irregular and often rapid heart rate.
+              INCONCLUSIVE_LOW_HEART_RATE: The ECG is inconclusive due to a low heart rate.
+              INCONCLUSIVE_HIGH_HEART_RATE: The ECG is inconclusive due to a high heart rate.
+              INCONCLUSIVE_POOR_READING: The ECG is inconclusive due to a poor reading.
+              INCONCLUSIVE_OTHER: The ECG is inconclusive due to other reasons.
+              UNRECOGNIZED: The ECG shows an unrecognized rhythm.
+           */
+          ElectrocardiogramClassification classification = ecgValue.classification;
+          res[dateTime] = {
+            "values": voltageValues,
+            "averageHR": averageHeartRate,
+            "classification": classification.value,
+            "val_qnt": voltageValues.length
+          };
+        } else {
+          num value0 = num.parse(point.value.toString());
+          res[dateTime] = {
+            "value0": value0,
+            "device": point.deviceId
+          };
+        }
       }
     }
     return res;

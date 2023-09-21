@@ -43,7 +43,6 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch(state) {
       case AppLifecycleState.resumed:
-        print("app in resumed");
         Wakelock.enable();
         if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
           BackgroundServiceHelper.enableBackgroundService();
@@ -51,17 +50,10 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
           HealthManager.writeData();
         }
         break;
-      case AppLifecycleState.inactive:
-        print("app in inactive");
-        Wakelock.disable();
-        break;
       case AppLifecycleState.paused:
-        print("app in paused");
         Wakelock.disable();
         break;
-      case AppLifecycleState.detached:
-        print("app in detached");
-        Wakelock.disable();
+      default:
         break;
     }
   }
@@ -83,6 +75,7 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
     tz.setLocalLocation(tz.getLocation("Europe/Rome"));
     await AppTrackingTransparency.requestTrackingAuthorization();
     await LocalNotificationService.requestPermissionsIOS();
+
     //USIAMO UN DIZIONARIO NEL CASO IN FUTURO DEBBANO ESSERE AGGIUNGE ULTERIORI INFO DA CARICARE
     Map<String,dynamic> res = {};
     final SharedPreferences prefs = await SharedPreferences.getInstance();

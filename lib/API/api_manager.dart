@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/user.dart';
+import 'dart:developer';
 
 import '../UI/utilities/error_manager.dart';
 
@@ -13,6 +14,7 @@ class APIManager {
   static const String _TESTURL = "https://test-services.mosaicoproject.it/api/v2";
   static const String BLOOD_PRESSURE_IDENTIFIER = "_BloodPressure";
   static const String HEART_RATE_IDENTIFIER = "_HeartRate";
+  static const String HEART_RATE_AW_IDENTIFIER = "_HeartRateAW";
   static const String OXYGEN_SATURATION_IDENTIFIER = "_OxygenSaturation";
   static const String BODY_MASS_INDEX_IDENTIFIER = "_BMI";
   static const String LEAN_BODY_MASS_IDENTIFIER = "_LBM";
@@ -107,64 +109,30 @@ class APIManager {
     }
   }
 
-  /*static Future<String> getLastUploadDate() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? lastMeasurementsId = prefs.getString("lastMeasurementsId");
-    if(lastMeasurementsId != null) {
-      Map<String, dynamic> last = await _getData(hook: "measurements/$lastMeasurementsId");
-      List allData = last["data"];
-      return DateFormat("yyyy-MM-dd HH:mm:ss").format(DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(allData[0]["uploadDate"]));
-    }
-    else {
-      return DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now().subtract(const Duration(minutes: 30)));
-    }
-  }*/
-
-  /*static Future<Map<String, dynamic>> _downloadLastMeasurements() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? lastMeasurementsId = prefs.getString("lastMeasurementsId");
-    if(lastMeasurementsId != null) {
-      Map<String, dynamic> last = await _getData(hook: "measurements/$lastMeasurementsId");
-      List allData = last["data"];
-      Map<String, dynamic> res = {};
-      for(Map<String,dynamic> data in allData) {
-        String identifier = data["prettyId"];
-        String date = DateFormat("yyyy-MM-dd HH:mm:ss").format(DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(data["date"]));
-        if(res.containsKey(identifier)) {
-          (res[identifier] as List<String>).add(date);
-        } else {
-          res[identifier] = [date];
-        }
+  static Future<DateTime> getLastMeasurementDate(String dataType) async {
+    Map<String,dynamic> last10 = await _getData(hook: "measurements/medical-data/$dataType");
+    List<DateTime> allDates = [];
+    if(last10.containsKey("data")) {
+      for (Map<String, dynamic> data in last10["data"]) {
+        String measurementDate = data["date"];
+        allDates.add(DateFormat("MMMM, dd yyyy HH:mm:ssZ").parse(measurementDate));
       }
-      return res;
+      if(allDates.isNotEmpty) {
+        allDates.sort((a, b) => b.compareTo(a));
+        return allDates.first.add(const Duration(seconds: 1));
+      }
+      else {
+        return DateTime.now().subtract(const Duration(days: 1));
+      }
     }
     else {
-      return {};
+      return DateTime.now().subtract(const Duration(days: 1));
     }
   }
 
-  static Map<String,dynamic> _removeDuplicates(Map<String,dynamic> data, Map<String, dynamic> lastMeasurements) {
-    Map<String,dynamic> res = {};
-    for(String identifier in data.keys) {
-      List<String>? alreadyUploadedDates = lastMeasurements[identifier];
-      for(Map<String, dynamic> measurement in data[identifier]) {
-        print(measurement);
-        String currentDate = measurement["date"];
-        if(alreadyUploadedDates == null || !alreadyUploadedDates.contains(currentDate)) {
-          if(res.containsKey(identifier)) {
-            (res[identifier] as List<Map<String, dynamic>>).add(measurement);
-          }
-          else {
-            res[identifier] = [measurement];
-          }
-        }
-      }
-    }
-    return res;
-  }*/
-
   static Future<String> uploadMeasurements({
     List<Map<String,dynamic>>? valuesHR,
+    List<Map<String,dynamic>>? valuesHRAW,
     List<Map<String,dynamic>>? valuesBP,
     List<Map<String,dynamic>>? valuesOS,
     List<Map<String,dynamic>>? valuesBMI,
@@ -174,6 +142,7 @@ class APIManager {
   async {
     Map<String, dynamic> data = {
       if(valuesHR != null) HEART_RATE_IDENTIFIER: valuesHR,
+      if(valuesHRAW != null) HEART_RATE_AW_IDENTIFIER: valuesHRAW,
       if(valuesBP != null) BLOOD_PRESSURE_IDENTIFIER: valuesBP,
       if(valuesOS != null) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
       if(valuesBMI != null) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
@@ -181,7 +150,6 @@ class APIManager {
       if(valuesW != null) WEIGHT_IDENTIFIER: valuesW,
       if(valuesECG != null) ECG_IDENTIFIER: valuesECG
     };
-    print("TO UPLOAD $data");
     if(data.isNotEmpty) {
       Map<String, dynamic> parameters = {
         "patient": {
@@ -189,6 +157,7 @@ class APIManager {
         },
         "data": data,
       };
+      log("TO UPLOAD ${jsonEncode(parameters)}");
       Map<String, dynamic> res = await _postData(
           parameters: parameters,
           hook: "measurements"
@@ -234,8 +203,11 @@ class APIManager {
 
   // Funzione per fare POST
   static Future<Map<String,dynamic>> _postData({hook = String, parameters = Map<String, String>, refreshed = false}) async {
-    final headers = {
+    Map<String, String> headers = {
       'Authorization': 'Bearer $authToken',
+      'Content-Type': 'application/json',
+      'Accept': '*/*',
+      'Accept-Encoding': 'gzip, deflate, br'
     };
     // The URL where you want to send the POST request
     final url = Uri.parse(testMode ? "$_TESTURL/$hook" : "$_PRODURL/$hook");

@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -44,9 +45,10 @@ class SmartVillageButtonState extends State<SmartVillageButton> {
             ),
             elevation: MaterialStateProperty.all<double>(0),
           ),
-          child: Text(
+          child: AutoSizeText(
             widget.text,
-            style: TextStyle(fontSize: 18, color: widget.textColor),
+            style: TextStyle(color: widget.textColor),
+            maxLines: 1,
           ),
         ),
       );
@@ -64,9 +66,10 @@ class SmartVillageButtonState extends State<SmartVillageButton> {
           elevation: MaterialStateProperty.all<double>(0),
         ),
         onLongPress: null,
-        child: Text(
+        child: AutoSizeText(
           widget.text,
-          style: const TextStyle(fontSize: 18, color: CupertinoColors.white),
+          style: const TextStyle(color: CupertinoColors.white),
+          maxLines: 1
         ),
       );
     }

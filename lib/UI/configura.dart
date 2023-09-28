@@ -7,7 +7,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 import 'package:smartvillage/API/health_manager.dart';
-import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
@@ -76,7 +75,7 @@ class ConfiguraState extends State<Configura> {
                 ]
             ),
             const Spacer(),
-            if(Utente.logged) Padding(
+            /*if(Utente.logged) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Esci dall'app",
@@ -91,8 +90,8 @@ class ConfiguraState extends State<Configura> {
                 textColor: Theme.of(context).colorScheme.onError,
               ),
             ),
-            const SizedBox(height: 10,),
-            if(Utente.logged) Padding(
+            const SizedBox(height: 10,),*/
+            /*if(Utente.logged) Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SmartVillageButton(
                 text: "Elimina account e dati",
@@ -106,7 +105,7 @@ class ConfiguraState extends State<Configura> {
                 color: Theme.of(context).colorScheme.error,
                 textColor: Theme.of(context).colorScheme.onError,
               ),
-            ),
+            ),*/
             const SizedBox(height: 40,)
           ],
         ),

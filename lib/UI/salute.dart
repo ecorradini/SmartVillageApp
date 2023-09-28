@@ -42,7 +42,7 @@ class SaluteState extends State<Salute> {
               children: [
                 const Image(image: AssetImage('assets/apple_health_icon.png'), width: 50,),
                 const SizedBox(width: 8,),
-                AutoSizeText("Funziona con l'app Salute", maxLines: 1, style: TextStyle(color: Theme.of(context).colorScheme.onBackground, fontWeight: FontWeight.bold), minFontSize: 20,),
+                AutoSizeText("Funziona con l'app Salute", maxLines: 1, style: TextStyle(color: Theme.of(context).colorScheme.onBackground, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 12,),
@@ -72,7 +72,7 @@ class SaluteState extends State<Salute> {
             const SizedBox(height: 30,),
             Row(
               children: [
-                Text("Sincronizzazione automatica", style: TextStyle(fontSize: 17, color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray)),
+                AutoSizeText("Sincronizzazione automatica", style: TextStyle(color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray)),
                 const Spacer(),
                 healthSync ? CupertinoSwitch(
                   // This bool value toggles the switch.

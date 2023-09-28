@@ -91,18 +91,13 @@ class APIManager {
         Utente.nome = userResDict["data"]!["name"];
         Utente.cognome = userResDict["data"]!["surname"];
         Utente.email = userResDict["data"]!["account"]!["email"];
-        //Utente.dataNascita = patientResDict["data"]!["dateOfBirth"];
-        //Utente.genere = patientResDict["data"]!["genre"]!["id"];
-        //Utente.codiceEsenzione = patientResDict["data"]!["exemptionCode"];
         Utente.stato = userResDict["status"];
         Utente.created = userResDict["created"];
         Utente.id = userResDict["uuid"];
         Utente.enabledAccount = userResDict["data"]!["account"]!["enabled"].toString();
-        //Utente.pin = patientResDict["data"]!["pin"].toString();
         Utente.codiceFiscale = userResDict["data"]!["fiscalCode"].toString();
         prefs.setString("email", email);
         prefs.setString("password", password);
-        //prefs.setString("codiceFiscale", codiceFiscale);
         prefs.setBool("loggedFromTest", testMode);
         return true;
       }
@@ -122,11 +117,11 @@ class APIManager {
         return allDates.first.add(const Duration(seconds: 1));
       }
       else {
-        return DateTime.now().subtract(const Duration(days: 1));
+        return DateTime.now().subtract(const Duration(hours: 1030));
       }
     }
     else {
-      return DateTime.now().subtract(const Duration(days: 1));
+      return DateTime.now().subtract(const Duration(days: 1030));
     }
   }
 
@@ -141,14 +136,14 @@ class APIManager {
     List<Map<String,dynamic>>? valuesECG})
   async {
     Map<String, dynamic> data = {
-      if(valuesHR != null) HEART_RATE_IDENTIFIER: valuesHR,
-      if(valuesHRAW != null) HEART_RATE_AW_IDENTIFIER: valuesHRAW,
-      if(valuesBP != null) BLOOD_PRESSURE_IDENTIFIER: valuesBP,
-      if(valuesOS != null) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
-      if(valuesBMI != null) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
-      if(valuesLBM != null) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
-      if(valuesW != null) WEIGHT_IDENTIFIER: valuesW,
-      if(valuesECG != null) ECG_IDENTIFIER: valuesECG
+      if(valuesHR != null && valuesHR.isNotEmpty) HEART_RATE_IDENTIFIER: valuesHR,
+      if(valuesHRAW != null && valuesHRAW.isNotEmpty) HEART_RATE_AW_IDENTIFIER: valuesHRAW,
+      if(valuesBP != null && valuesBP.isNotEmpty) BLOOD_PRESSURE_IDENTIFIER: valuesBP,
+      if(valuesOS != null && valuesOS.isNotEmpty) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
+      if(valuesBMI != null && valuesBMI.isNotEmpty) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
+      if(valuesLBM != null && valuesLBM.isNotEmpty) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
+      if(valuesW != null && valuesW.isNotEmpty) WEIGHT_IDENTIFIER: valuesW,
+      if(valuesECG != null && valuesECG.isNotEmpty) ECG_IDENTIFIER: valuesECG
     };
     if(data.isNotEmpty) {
       Map<String, dynamic> parameters = {

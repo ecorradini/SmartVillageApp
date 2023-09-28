@@ -1,8 +1,5 @@
-import 'dart:developer';
-
 import 'package:health/health.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartvillage/API/api_manager.dart';
 
 import 'notification_service.dart';
@@ -192,16 +189,19 @@ class HealthManager {
     print("${type.name} reading data from: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(lastMeasureDate)} to ${DateFormat("yyyy-MM-dd HH:mm:ss").format(now)}");
     List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, now, [type]);
     if(healthData.isNotEmpty) {
-      healthData.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
+      healthData.sort((a, b) => a.dateTo.compareTo(b.dateTo));
       for (HealthDataPoint point in healthData) {
         String dateTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateFrom);
         if (point.value is ElectrocardiogramHealthValue) {
           String dateTimeTo = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateTo);
-          ElectrocardiogramHealthValue ecgValue = point.value as ElectrocardiogramHealthValue;
-          List<num> voltageValues = ecgValue.voltageValues.map((v) => v.voltage).toList();
-          int frequence = (ecgValue.samplingFrequency ?? 512).toInt();
-          num averageHeartRate = (ecgValue.averageHeartRate ?? 0).toInt();
-          ElectrocardiogramClassification classification = ecgValue.classification;
+          List<num> voltageValues = [];
+          for (var v in (point.value as ElectrocardiogramHealthValue).voltageValues) {
+            voltageValues.add(v.voltage);
+          }
+          //print(voltageValues);
+          int frequence = ((point.value as ElectrocardiogramHealthValue).samplingFrequency ?? 512).toInt();
+          num averageHeartRate = ((point.value as ElectrocardiogramHealthValue).averageHeartRate ?? 0).toInt();
+          ElectrocardiogramClassification classification = (point.value as ElectrocardiogramHealthValue).classification;
           res[dateTime] = {
             "values": voltageValues,
             "freq_hz": frequence,

@@ -10,8 +10,6 @@ import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
-import '../API/user.dart';
-
 class Configura extends StatefulWidget {
   final bool? loggedFromTest;
   final bool? logged;

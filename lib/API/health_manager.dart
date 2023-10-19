@@ -54,6 +54,7 @@ class HealthManager {
     List<Map<String,dynamic>> oxygenSaturationRead = _convertFromMapToList(await _readOxygenSaturation());
     List<Map<String,dynamic>> bmiRead = _convertFromMapToList(await _readBMI());
     List<Map<String,dynamic>> lbmRead = _convertFromMapToList(await _readLBM());
+    List<Map<String,dynamic>> bfpRead = _convertFromMapToList(await _readBFP());
     List<Map<String,dynamic>> weightRead = _convertFromMapToList(await _readWeight());
     List<Map<String,dynamic>> ecgRead = _convertECGFromMapToList(await _readECG());
 
@@ -64,6 +65,7 @@ class HealthManager {
       APIManager.OXYGEN_SATURATION_IDENTIFIER: oxygenSaturationRead.isNotEmpty ? oxygenSaturationRead : null,
       APIManager.BODY_MASS_INDEX_IDENTIFIER: bmiRead.isNotEmpty ? bmiRead : null,
       APIManager.LEAN_BODY_MASS_IDENTIFIER: lbmRead.isNotEmpty ? lbmRead : null,
+      APIManager.BODY_FAT_PERCENTAGE: bfpRead.isNotEmpty ? bfpRead : null,
       APIManager.WEIGHT_IDENTIFIER: weightRead.isNotEmpty ? weightRead : null,
       APIManager.ECG_IDENTIFIER: ecgRead.isNotEmpty ? ecgRead : null
     };
@@ -83,6 +85,7 @@ class HealthManager {
         valuesOS: allReads[APIManager.OXYGEN_SATURATION_IDENTIFIER],
         valuesBMI: allReads[APIManager.BODY_MASS_INDEX_IDENTIFIER],
         valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
+        valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE],
         valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
         valuesECG: allReads[APIManager.ECG_IDENTIFIER],
       );
@@ -168,6 +171,12 @@ class HealthManager {
         "value0": lbm
       };
     }
+    return res;
+  }
+
+  static Future<Map<String,dynamic>> _readBFP() async {
+    DateTime lastMeasureDate = await APIManager.getLastMeasurementDate(APIManager.BODY_FAT_PERCENTAGE);
+    Map<String,dynamic> res = await _genericRead(HealthDataType.BODY_FAT_PERCENTAGE, lastMeasureDate);
     return res;
   }
 

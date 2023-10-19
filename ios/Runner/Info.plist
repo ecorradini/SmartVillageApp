@@ -35,6 +35,8 @@
 	<string>Smart Village necessita di sincronizzare i dati salute per il funzionamento del servizio.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Smart Village necessita di sincronizzare i dati salute per il funzionamento del servizio.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Smart Village raccoglierà dati Salute che verranno sincronizzati con la piattaforma Mosaico.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -60,7 +62,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Smart Village raccoglierà dati Salute che verranno sincronizzati con la piattaforma Mosaico.</string>
 </dict>
 </plist>

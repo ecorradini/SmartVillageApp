@@ -18,6 +18,7 @@ class APIManager {
   static const String OXYGEN_SATURATION_IDENTIFIER = "_OxygenSaturation";
   static const String BODY_MASS_INDEX_IDENTIFIER = "_BMI";
   static const String LEAN_BODY_MASS_IDENTIFIER = "_LBM";
+  static const String BODY_FAT_PERCENTAGE = "_FBM";
   static const String WEIGHT_IDENTIFIER = "_Weight";
   static const String ECG_IDENTIFIER = "_ECG";
 
@@ -132,6 +133,7 @@ class APIManager {
     List<Map<String,dynamic>>? valuesOS,
     List<Map<String,dynamic>>? valuesBMI,
     List<Map<String,dynamic>>? valuesLBM,
+    List<Map<String,dynamic>>? valuesBFP,
     List<Map<String,dynamic>>? valuesW,
     List<Map<String,dynamic>>? valuesECG})
   async {
@@ -142,6 +144,7 @@ class APIManager {
       if(valuesOS != null && valuesOS.isNotEmpty) OXYGEN_SATURATION_IDENTIFIER: valuesOS,
       if(valuesBMI != null && valuesBMI.isNotEmpty) BODY_MASS_INDEX_IDENTIFIER: valuesBMI,
       if(valuesLBM != null && valuesLBM.isNotEmpty) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
+      if(valuesBFP != null && valuesBFP.isNotEmpty) BODY_FAT_PERCENTAGE: valuesBFP,
       if(valuesW != null && valuesW.isNotEmpty) WEIGHT_IDENTIFIER: valuesW,
       if(valuesECG != null && valuesECG.isNotEmpty) ECG_IDENTIFIER: valuesECG
     };

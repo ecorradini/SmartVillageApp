@@ -22,13 +22,13 @@ class HealthManager {
 
   static Map<int, String> ECG_VALUES = {
     ElectrocardiogramClassification.NOT_SET.value: "Nessuna classificazione",
-    ElectrocardiogramClassification.SINUS_RHYTHM.value: "L'ECG mostra un ritmo sinusale.",
-    ElectrocardiogramClassification.ATRIAL_FIBRILLATION.value: "L’ECG mostra fibrillazione atriale.",
-    ElectrocardiogramClassification.INCONCLUSIVE_LOW_HEART_RATE.value: "L’ECG non è conclusivo a causa della bassa frequenza cardiaca.",
-    ElectrocardiogramClassification.INCONCLUSIVE_HIGH_HEART_RATE.value: "L’ECG non è conclusivo a causa della frequenza cardiaca elevata.",
-    ElectrocardiogramClassification.INCONCLUSIVE_POOR_READING.value: "L'ECG non è conclusivo a causa di una lettura inadeguata.",
-    ElectrocardiogramClassification.INCONCLUSIVE_OTHER.value: "L'ECG non è conclusivo per altri motivi.",
-    ElectrocardiogramClassification.UNRECOGNIZED.value: "L'ECG mostra un ritmo non riconosciuto."
+    ElectrocardiogramClassification.SINUS_RHYTHM.value: "Ritmo sinusale.",
+    ElectrocardiogramClassification.ATRIAL_FIBRILLATION.value: "Fibrillazione atriale.",
+    ElectrocardiogramClassification.INCONCLUSIVE_LOW_HEART_RATE.value: "Bassa frequenza cardiaca.",
+    ElectrocardiogramClassification.INCONCLUSIVE_HIGH_HEART_RATE.value: "Elevata frequenza cardiaca.",
+    ElectrocardiogramClassification.INCONCLUSIVE_POOR_READING.value: "Lettura inadeguata.",
+    ElectrocardiogramClassification.INCONCLUSIVE_OTHER.value: "Altri motivi.",
+    ElectrocardiogramClassification.UNRECOGNIZED.value: "Ritmo non riconosciuto."
   };
 
   static bool currentlyUploading = false;
@@ -163,13 +163,15 @@ class HealthManager {
     Map<String,dynamic> resBFP = await _genericRead(HealthDataType.BODY_FAT_PERCENTAGE, lastMeasureDate);
     Map<String,dynamic> res = {};
     for(String date in resW.keys) {
-      double weight = resW[date]["value0"];
-      double perc = resBFP[date]["value0"];
-      double lbm = weight - ((weight*perc)/100);
-      res[date] = {
-        "device": resW[date]["device"],
-        "value0": lbm
-      };
+      try {
+        double weight = resW[date]["value0"];
+        double perc = resBFP[date]["value0"];
+        double lbm = (weight - (weight * perc)) * 1000;
+        res[date] = {
+          "device": resW[date]["device"],
+          "value0": lbm
+        };
+      } catch(_) {}
     }
     return res;
   }
@@ -182,7 +184,15 @@ class HealthManager {
 
   static Future<Map<String,dynamic>> _readWeight() async {
     DateTime lastMeasureDate = await APIManager.getLastMeasurementDate(APIManager.WEIGHT_IDENTIFIER);
-    Map<String,dynamic> res = await _genericRead(HealthDataType.WEIGHT, lastMeasureDate);
+    Map<String,dynamic> resW = await _genericRead(HealthDataType.WEIGHT, lastMeasureDate);
+    Map<String,dynamic> res = {};
+    for(String date in resW.keys) {
+      double weight = resW[date]["value0"];
+      res[date] = {
+        "device": resW[date]["device"],
+        "value0": weight*1000
+      };
+    }
     return res;
   }
 
@@ -205,7 +215,7 @@ class HealthManager {
           String dateTimeTo = DateFormat("yyyy-MM-dd HH:mm:ss").format(point.dateTo);
           List<num> voltageValues = [];
           for (var v in (point.value as ElectrocardiogramHealthValue).voltageValues) {
-            voltageValues.add(v.voltage);
+            voltageValues.add(num.parse(v.voltage.toStringAsFixed(5)));
           }
           //print(voltageValues);
           int frequence = ((point.value as ElectrocardiogramHealthValue).samplingFrequency ?? 512).toInt();

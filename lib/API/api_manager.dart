@@ -118,11 +118,30 @@ class APIManager {
         return allDates.first.add(const Duration(seconds: 1));
       }
       else {
-        return DateTime.now().subtract(const Duration(hours: 1030));
+        return DateTime.now().subtract(const Duration(days: 170));
       }
     }
     else {
-      return DateTime.now().subtract(const Duration(days: 1030));
+      return DateTime.now().subtract(const Duration(days: 170));
+    }
+  }
+
+  static Future<void> uploadECGs({List<Map<String,dynamic>>? valuesECG}) async {
+    if(valuesECG != null && valuesECG.isNotEmpty) {
+      for (Map<String, dynamic> data0 in valuesECG) {
+        Map<String, dynamic> parameters = {
+          "patient": {
+            "fiscalCode": Utente.codiceFiscale
+          },
+          "data": {
+            ECG_IDENTIFIER: [data0],
+          },
+        };
+        Map<String, dynamic> res = await _postData(
+            parameters: parameters,
+            hook: "measurements"
+        );
+      }
     }
   }
 
@@ -134,8 +153,7 @@ class APIManager {
     List<Map<String,dynamic>>? valuesBMI,
     List<Map<String,dynamic>>? valuesLBM,
     List<Map<String,dynamic>>? valuesBFP,
-    List<Map<String,dynamic>>? valuesW,
-    List<Map<String,dynamic>>? valuesECG})
+    List<Map<String,dynamic>>? valuesW})
   async {
     Map<String, dynamic> data = {
       if(valuesHR != null && valuesHR.isNotEmpty) HEART_RATE_IDENTIFIER: valuesHR,
@@ -146,7 +164,6 @@ class APIManager {
       if(valuesLBM != null && valuesLBM.isNotEmpty) LEAN_BODY_MASS_IDENTIFIER: valuesLBM,
       if(valuesBFP != null && valuesBFP.isNotEmpty) BODY_FAT_PERCENTAGE: valuesBFP,
       if(valuesW != null && valuesW.isNotEmpty) WEIGHT_IDENTIFIER: valuesW,
-      if(valuesECG != null && valuesECG.isNotEmpty) ECG_IDENTIFIER: valuesECG
     };
     if(data.isNotEmpty) {
       Map<String, dynamic> parameters = {

@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:developer' as developer;
+import 'dart:math';
+
 import 'package:health/health.dart';
 import 'package:intl/intl.dart';
 import 'package:smartvillage/API/api_manager.dart';
@@ -57,6 +61,7 @@ class HealthManager {
     List<Map<String,dynamic>> bfpRead = _convertFromMapToList(await _readBFP());
     List<Map<String,dynamic>> weightRead = _convertFromMapToList(await _readWeight());
     List<Map<String,dynamic>> ecgRead = _convertECGFromMapToList(await _readECG());
+    print(ecgRead);
 
     Map<String,dynamic> res = {
       APIManager.HEART_RATE_IDENTIFIER: heartRateRead.isNotEmpty ? heartRateRead : null,
@@ -78,6 +83,7 @@ class HealthManager {
       currentlyUploading = true;
       healthSetup();
       Map<String, dynamic> allReads = await _readData();
+      await APIManager.uploadECGs(valuesECG: allReads[APIManager.ECG_IDENTIFIER]);
       String lastDate = await APIManager.uploadMeasurements(
         valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
         valuesHRAW: allReads[APIManager.HEART_RATE_AW_IDENTIFIER],
@@ -87,7 +93,6 @@ class HealthManager {
         valuesLBM: allReads[APIManager.LEAN_BODY_MASS_IDENTIFIER],
         valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE],
         valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
-        valuesECG: allReads[APIManager.ECG_IDENTIFIER],
       );
       if (!lastDate.contains("error_")) {
         //await _saveLastDates();
@@ -97,8 +102,7 @@ class HealthManager {
           lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastDate);
         }
         print("LAST UPLOADED: $lastDate");
-        LocalNotificationService.showNotification(
-            "Dati sincronizzati in background.");
+        LocalNotificationService.showNotification("Dati sincronizzati in background.");
       }
       currentlyUploading = false;
     }
@@ -206,6 +210,7 @@ class HealthManager {
     Map<String,dynamic> res = {};
     DateTime now = DateTime.now();
     print("${type.name} reading data from: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(lastMeasureDate)} to ${DateFormat("yyyy-MM-dd HH:mm:ss").format(now)}");
+    //List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, lastMeasureDate.add(const Duration(days: 30)), [type]);
     List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, now, [type]);
     if(healthData.isNotEmpty) {
       healthData.sort((a, b) => a.dateTo.compareTo(b.dateTo));
@@ -217,9 +222,8 @@ class HealthManager {
           for (var v in (point.value as ElectrocardiogramHealthValue).voltageValues) {
             voltageValues.add(num.parse(v.voltage.toStringAsFixed(5)));
           }
-          //print(voltageValues);
-          int frequence = ((point.value as ElectrocardiogramHealthValue).samplingFrequency ?? 512).toInt();
-          num averageHeartRate = ((point.value as ElectrocardiogramHealthValue).averageHeartRate ?? 0).toInt();
+          num frequence = ((point.value as ElectrocardiogramHealthValue).samplingFrequency ?? 512);
+          num averageHeartRate = ((point.value as ElectrocardiogramHealthValue).averageHeartRate ?? 0);
           ElectrocardiogramClassification classification = (point.value as ElectrocardiogramHealthValue).classification;
           res[dateTime] = {
             "values": voltageValues,
@@ -231,7 +235,7 @@ class HealthManager {
             "val_qnt": voltageValues.length.toInt()
           };
         } else {
-          num value0 = num.parse(point.value.toString());
+          num value0 = num.parse(num.parse(point.value.toString()).toStringAsFixed(5));
           res[dateTime] = {
             "value0": value0,
             "device": point.sourceName
@@ -239,7 +243,31 @@ class HealthManager {
         }
       }
     }
+    print(res.length);
     return res;
+  }
+
+  static num formatNumberWithPrecisionScale(num value, int precision, int scale) {
+    if (value.abs() >= pow(10, 6)) {
+      throw ArgumentError('The absolute value must be less than 10^6.');
+    }
+
+    // Calculate the factor to use for rounding based on the scale.
+    num scaleFactor = pow(10, scale);
+
+    // Round the value to the desired scale.
+    num roundedValue = (value * scaleFactor).round() / scaleFactor;
+
+    // Convert the number to a string with the specified scale (decimal places).
+    String formattedString = roundedValue.toStringAsFixed(scale);
+
+    // Check if the total number of digits exceeds the precision.
+    // If so, it means the integer part is too long.
+    if (formattedString.replaceAll('.', '').replaceAll('-', '').length > precision) {
+      throw ArgumentError('The total number of digits exceeds the allowed precision.');
+    }
+
+    return roundedValue;
   }
 
   static List<Map<String,dynamic>> _convertFromMapToList(Map<String,dynamic> source) {

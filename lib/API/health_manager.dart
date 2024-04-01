@@ -1,7 +1,4 @@
-import 'dart:convert';
-import 'dart:developer' as developer;
-import 'dart:math';
-
+import 'dart:io' show Platform;
 import 'package:health/health.dart';
 import 'package:intl/intl.dart';
 import 'package:smartvillage/API/api_manager.dart';
@@ -10,7 +7,7 @@ import 'notification_service.dart';
 
 class HealthManager {
 
-  static HealthFactory? healthFactory;
+  static Health? health;
   static DateTime? lastMeasurementsUpload;
 
   static var types = [
@@ -21,7 +18,7 @@ class HealthManager {
     HealthDataType.BODY_MASS_INDEX,
     HealthDataType.BODY_FAT_PERCENTAGE,
     HealthDataType.WEIGHT,
-    HealthDataType.ELECTROCARDIOGRAM,
+    if(Platform.isIOS) HealthDataType.ELECTROCARDIOGRAM,
   ];
 
   static Map<int, String> ECG_VALUES = {
@@ -32,23 +29,24 @@ class HealthManager {
     ElectrocardiogramClassification.INCONCLUSIVE_HIGH_HEART_RATE.value: "Elevata frequenza cardiaca.",
     ElectrocardiogramClassification.INCONCLUSIVE_POOR_READING.value: "Lettura inadeguata.",
     ElectrocardiogramClassification.INCONCLUSIVE_OTHER.value: "Altri motivi.",
-    ElectrocardiogramClassification.UNRECOGNIZED.value: "Ritmo non riconosciuto."
+    ElectrocardiogramClassification.UNRECOGNIZED.value: "Ritmo non riconosciuto.",
+    -500: "Unkown"
   };
 
   static bool currentlyUploading = false;
 
   static void healthSetup() {
     //Richiedo uso Health
-    healthFactory = HealthFactory(useHealthConnectIfAvailable: true);
+    health = Health();
   }
 
   static void revokePermissions() async {
-    await healthFactory?.revokePermissions();
+    await health?.revokePermissions();
 }
 
   //Richiedo permesso uso HealthKit
   static Future<bool> requestPermissions() async {
-    return await healthFactory?.requestAuthorization(types) ?? false;
+    return await health?.requestAuthorization(types) ?? false;
   }
 
   static Future<Map<String,dynamic>> _readData() async {
@@ -61,7 +59,6 @@ class HealthManager {
     List<Map<String,dynamic>> bfpRead = _convertFromMapToList(await _readBFP());
     List<Map<String,dynamic>> weightRead = _convertFromMapToList(await _readWeight());
     List<Map<String,dynamic>> ecgRead = _convertECGFromMapToList(await _readECG());
-    print(ecgRead);
 
     Map<String,dynamic> res = {
       APIManager.HEART_RATE_IDENTIFIER: heartRateRead.isNotEmpty ? heartRateRead : null,
@@ -84,7 +81,7 @@ class HealthManager {
       healthSetup();
       Map<String, dynamic> allReads = await _readData();
       await APIManager.uploadECGs(valuesECG: allReads[APIManager.ECG_IDENTIFIER]);
-      String lastDate = await APIManager.uploadMeasurements(
+      await APIManager.uploadMeasurements(
         valuesHR: allReads[APIManager.HEART_RATE_IDENTIFIER],
         valuesHRAW: allReads[APIManager.HEART_RATE_AW_IDENTIFIER],
         valuesBP: allReads[APIManager.BLOOD_PRESSURE_IDENTIFIER],
@@ -94,19 +91,10 @@ class HealthManager {
         valuesBFP: allReads[APIManager.BODY_FAT_PERCENTAGE],
         valuesW: allReads[APIManager.WEIGHT_IDENTIFIER],
       );
-      if (!lastDate.contains("error_")) {
-        //await _saveLastDates();
-        try {
-          lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastDate);
-        } catch (_) {
-          lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastDate);
-        }
-        print("LAST UPLOADED: $lastDate");
-        LocalNotificationService.showNotification("Dati sincronizzati in background.");
-      }
+      LocalNotificationService.showNotification("Dati sincronizzati in background.");
+      lastMeasurementsUpload = DateTime.now();
       currentlyUploading = false;
     }
-    //await BackgroundServiceHelper.enableBackgroundService();
   }
 
   static Future<Map<String,dynamic>> _readHeartRate() async {
@@ -211,7 +199,7 @@ class HealthManager {
     DateTime now = DateTime.now();
     print("${type.name} reading data from: ${DateFormat("yyyy-MM-dd HH:mm:ss").format(lastMeasureDate)} to ${DateFormat("yyyy-MM-dd HH:mm:ss").format(now)}");
     //List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, lastMeasureDate.add(const Duration(days: 30)), [type]);
-    List<HealthDataPoint> healthData = await healthFactory!.getHealthDataFromTypes(lastMeasureDate, now, [type]);
+    List<HealthDataPoint> healthData = await health!.getHealthDataFromTypes(lastMeasureDate, now, [type]);
     if(healthData.isNotEmpty) {
       healthData.sort((a, b) => a.dateTo.compareTo(b.dateTo));
       for (HealthDataPoint point in healthData) {
@@ -224,18 +212,18 @@ class HealthManager {
           }
           num frequence = ((point.value as ElectrocardiogramHealthValue).samplingFrequency ?? 512);
           num averageHeartRate = ((point.value as ElectrocardiogramHealthValue).averageHeartRate ?? 0);
-          ElectrocardiogramClassification classification = (point.value as ElectrocardiogramHealthValue).classification;
+          ElectrocardiogramClassification? classification = (point.value as ElectrocardiogramHealthValue).classification;
           res[dateTime] = {
             "values": voltageValues,
             "freq_hz": frequence,
             "endDate": dateTimeTo,
             "startDate": dateTime,
             "averageHR": averageHeartRate,
-            "classification": ECG_VALUES[classification.value],
+            "classification": ECG_VALUES[classification?.value ?? -500],
             "val_qnt": voltageValues.length.toInt()
           };
         } else {
-          num value0 = num.parse(num.parse(point.value.toString()).toStringAsFixed(5));
+          num value0 = roundToPrecisionScale(num.parse(point.value.toString()));
           res[dateTime] = {
             "value0": value0,
             "device": point.sourceName
@@ -247,27 +235,23 @@ class HealthManager {
     return res;
   }
 
-  static num formatNumberWithPrecisionScale(num value, int precision, int scale) {
-    if (value.abs() >= pow(10, 6)) {
-      throw ArgumentError('The absolute value must be less than 10^6.');
+  static num roundToPrecisionScale(num value) {
+    // Truncate if absolute value is greater than or equal to 1,000,000
+    if (value.abs() >= 1000000) {
+      // Reduce to just below 1,000,000 with the required scale of 5
+      value = value.isNegative ? -999999.99999 : 999999.99999;
     }
 
-    // Calculate the factor to use for rounding based on the scale.
-    num scaleFactor = pow(10, scale);
+    // Convert to string with 5 decimal places
+    String roundedString = value.toStringAsFixed(5);
 
-    // Round the value to the desired scale.
-    num roundedValue = (value * scaleFactor).round() / scaleFactor;
-
-    // Convert the number to a string with the specified scale (decimal places).
-    String formattedString = roundedValue.toStringAsFixed(scale);
-
-    // Check if the total number of digits exceeds the precision.
-    // If so, it means the integer part is too long.
-    if (formattedString.replaceAll('.', '').replaceAll('-', '').length > precision) {
-      throw ArgumentError('The total number of digits exceeds the allowed precision.');
+    // Check if the value is actually an integer and can be parsed as int
+    if (int.tryParse(roundedString) != null) {
+      return int.parse(roundedString);
     }
 
-    return roundedValue;
+    // Otherwise, parse it as a double
+    return double.parse(roundedString);
   }
 
   static List<Map<String,dynamic>> _convertFromMapToList(Map<String,dynamic> source) {

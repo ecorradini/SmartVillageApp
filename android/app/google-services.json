@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "902212500904",
+    "firebase_url": "https://smartvillage-be3dd-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "smartvillage-be3dd",
+    "storage_bucket": "smartvillage-be3dd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902212500904:android:6b247de1344ebc77bc719d",
+        "android_client_info": {
+          "package_name": "it.diism.smartvillage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCG6H56RUzZUXmd7zFZUHc0F2ZLYoyzX0c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

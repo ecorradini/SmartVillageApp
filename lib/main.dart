@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,6 +21,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:wakelock/wakelock.dart';
 
 import 'API/notification_service.dart';
+import 'firebase_options.dart';
 
 void main() {
   runApp(
@@ -71,6 +74,27 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
   }
 
   Future<Map<String,dynamic>> init() async {
+    //Firebase setup
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+
+    //Get current endpoints
+    FirebaseDatabase database = FirebaseDatabase.instance;
+    DatabaseReference prodRef = database.ref("prod_url");
+    DatabaseReference testRef = database.ref("test_url");
+    APIManager.prodUrl = (await prodRef.get()).value as String;
+    APIManager.testUrl = (await testRef.get()).value as String;
+    //Set up automatic update on change
+    prodRef.onValue.listen((DatabaseEvent event) {
+      APIManager.prodUrl = event.snapshot.value as String;
+    });
+    testRef.onValue.listen((DatabaseEvent event) {
+      APIManager.testUrl = event.snapshot.value as String;
+    });
+
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation("Europe/Rome"));
     await AppTrackingTransparency.requestTrackingAuthorization();

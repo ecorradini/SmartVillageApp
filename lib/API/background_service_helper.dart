@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:background_fetch/background_fetch.dart';
 import 'package:health_kit_reporter/health_kit_reporter.dart';
@@ -16,7 +17,6 @@ class BackgroundServiceHelper {
 
   static Future<void> enableBackgroundService() async {
     LocalNotificationService.initialize();
-    _startBackgroundTimer();
     final config = BackgroundFetchConfig(minimumFetchInterval: 1, requiredNetworkType: NetworkType.ANY);
     int status = await BackgroundFetch.configure(
         config,
@@ -41,27 +41,14 @@ class BackgroundServiceHelper {
       }
     );
     print("Background status: $status");
-    await observerQuery();
+    if(Platform.isIOS) await observerQuery();
     enabled = true;
   }
 
   static Future<void> stopService() async {
     await BackgroundFetch.stop("com.transistorsoft.smartvillagefetch");
     await BackgroundFetch.stop("com.transistorsoft.fetch");
-    _stopBackgroundTimer();
     enabled = false;
-  }
-
-  static void _startBackgroundTimer() {
-    uploadTimer = Timer.periodic(const Duration(seconds: 180), (timer) {
-      print("TIMER");
-      HealthManager.writeData();
-      //_startBackgroundTimer();
-    });
-  }
-
-  static void _stopBackgroundTimer() {
-    uploadTimer?.cancel();
   }
 
   static Future<void> _onBackgroundUpdate() async {

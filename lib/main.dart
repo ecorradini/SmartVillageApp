@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -98,7 +99,8 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation("Europe/Rome"));
     await AppTrackingTransparency.requestTrackingAuthorization();
-    await LocalNotificationService.requestPermissionsIOS();
+    if(Platform.isIOS) await LocalNotificationService.requestPermissionsIOS();
+    if(Platform.isAndroid) await LocalNotificationService.requestPermissionsAndroid();
 
     //USIAMO UN DIZIONARIO NEL CASO IN FUTURO DEBBANO ESSERE AGGIUNGE ULTERIORI INFO DA CARICARE
     Map<String,dynamic> res = {};

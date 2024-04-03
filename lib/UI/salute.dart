@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,11 +22,16 @@ class Salute extends StatefulWidget {
 
 class SaluteState extends State<Salute> {
 
+  final String _androidAppName = "Connessione Salute";
+  final String _iOSAppName = "Salute";
+  String appName = "";
+
   bool healthSync = false;
 
   @override
   void initState() {
     healthSync = APIManager.healthSync;
+    appName = Platform.isIOS ? _iOSAppName : _androidAppName;
     super.initState();
   }
 
@@ -40,13 +47,13 @@ class SaluteState extends State<Salute> {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Image(image: AssetImage('assets/apple_health_icon.png'), width: 50,),
+                Platform.isIOS ? const Image(image: AssetImage('assets/apple_health_icon.png'), width: 50,) : const Image(image: AssetImage('assets/healthconnect_icon.png'), width: 50,),
                 const SizedBox(width: 8,),
-                AutoSizeText("Funziona con l'app Salute", maxLines: 1, style: TextStyle(color: Theme.of(context).colorScheme.onBackground, fontWeight: FontWeight.bold)),
+                AutoSizeText("Funziona con l'app\n$appName", maxLines: 2, style: TextStyle(color: Theme.of(context).colorScheme.onBackground, fontWeight: FontWeight.bold)),
               ],
             ),
             const SizedBox(height: 12,),
-            Text("Per poter funzionare, Smart Village necessita dell'accesso ai dati registrati nell'app Salute.", style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onBackground), textAlign: TextAlign.justify,),
+            Text("Per poter funzionare, Smart Village necessita dell'accesso ai dati registrati nell'app $appName.", style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onBackground), textAlign: TextAlign.justify,),
             const SizedBox(height: 20,),
             SmartVillageButton(
               text: "Sincronizza Dati",

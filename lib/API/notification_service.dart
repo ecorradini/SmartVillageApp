@@ -29,6 +29,10 @@ class LocalNotificationService {
     );
   }
 
+  static Future<void> requestPermissionsAndroid() async {
+    await _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+  }
+
   static Future<void> requestPermissionsIOS() async {
     await _notificationsPlugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(
       alert: true,
@@ -41,7 +45,7 @@ class LocalNotificationService {
     //TODO: WHEN ANDROID
     var androidPlatformChannelSpecifics = const AndroidNotificationDetails(
         'SmartVillage',
-        'your channel name',
+        'smart_village',
         importance: Importance.max,
         priority: Priority.high
     );

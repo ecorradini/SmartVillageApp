@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:health/health.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:smartvillage/API/api_manager.dart';
 
 import 'notification_service.dart';
@@ -38,6 +39,7 @@ class HealthManager {
   static void healthSetup() {
     //Richiedo uso Health
     health = Health();
+    health?.configure(useHealthConnectIfAvailable: true);
   }
 
   static void revokePermissions() async {
@@ -46,6 +48,10 @@ class HealthManager {
 
   //Richiedo permesso uso HealthKit
   static Future<bool> requestPermissions() async {
+    if(Platform.isAndroid) {
+      await Permission.activityRecognition.request();
+      await Permission.location.request();
+    }
     return await health?.requestAuthorization(types) ?? false;
   }
 

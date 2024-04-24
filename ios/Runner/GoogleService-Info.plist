@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>902212500904-04qf2106is9r9ii1bb0ej7bjl7fhbpth.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyBTfU5JhzSFS5y9DZ9F5L2yI2-Aez3jyvc</string>
 	<key>GCM_SENDER_ID</key>
@@ -26,5 +28,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:902212500904:ios:6bc6d957e3c90cf1bc719d</string>
+	<key>DATABASE_URL</key>
+	<string>https://smartvillage-be3dd-default-rtdb.europe-west1.firebasedatabase.app</string>
 </dict>
 </plist>

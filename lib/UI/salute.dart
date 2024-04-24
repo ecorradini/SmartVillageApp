@@ -6,15 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
-import '../API/api_manager.dart';
-import '../API/background_service_helper.dart';
+import '../API/phone/background_service_helper.dart';
+import '../API/health/health_manager.dart';
+import '../API/mosaico/mosaico_manager.dart';
+import '../API/mosaico/mosaico_user.dart';
 
+//ignore: must_be_immutable
 class Salute extends StatefulWidget {
-  Salute({super.key});
+  MosaicoManager mosaicoManager;
+  HealthManager healthManager;
+  MosaicoUser mosaicoUser;
+  BackgroundServiceHelper backgroundServiceHelper;
+  Salute({super.key, required this.mosaicoManager, required this.healthManager, required this.mosaicoUser, required this.backgroundServiceHelper});
 
   @override
   SaluteState createState() => SaluteState();
@@ -22,15 +28,17 @@ class Salute extends StatefulWidget {
 
 class SaluteState extends State<Salute> {
 
-  final String _androidAppName = "Connessione Salute";
+  final String _androidAppName = "Google Fit";
   final String _iOSAppName = "Salute";
   String appName = "";
 
-  bool healthSync = false;
+  HealthManager? healthManager;
+  MosaicoManager? mosaicoManager;
 
   @override
   void initState() {
-    healthSync = APIManager.healthSync;
+    healthManager = widget.healthManager;
+    mosaicoManager = widget.mosaicoManager;
     appName = Platform.isIOS ? _iOSAppName : _androidAppName;
     super.initState();
   }
@@ -38,39 +46,55 @@ class SaluteState extends State<Salute> {
   @override
   Widget build(BuildContext context) {
     return SmartVillageScaffold(
-      appBarTitle: "Salute",
+        appBarTitle: "Salute",
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
           children: [
             Row(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Platform.isIOS ? const Image(image: AssetImage('assets/apple_health_icon.png'), width: 50,) : const Image(image: AssetImage('assets/healthconnect_icon.png'), width: 50,),
-                const SizedBox(width: 8,),
-                AutoSizeText("Funziona con l'app\n$appName", maxLines: 2, style: TextStyle(color: Theme.of(context).colorScheme.onBackground, fontWeight: FontWeight.bold)),
+                Platform.isIOS
+                    ? const Image(image: AssetImage('assets/apple_health_icon.png'), width: 35)
+                    : const Image(image: AssetImage('assets/gfit_icon.png'), width: 35),
+                const SizedBox(width: 8), // Provides space between the image and the text
+                Flexible( // Use Flexible here for the text widget
+                  child: AutoSizeText(
+                    "Funziona con l'app $appName",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    minFontSize: 18, // Minimum font size
+                    maxFontSize: 36, // Maximum font size, adjust based on your needs
+                    stepGranularity: 1,
+                    maxLines: 1,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12,),
-            Text("Per poter funzionare, Smart Village necessita dell'accesso ai dati registrati nell'app $appName.", style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onBackground), textAlign: TextAlign.justify,),
+            Text("Per poter funzionare, Smart Village necessita dell'accesso ai dati registrati nell'app $appName.", style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onBackground), textAlign: TextAlign.justify,),
             const SizedBox(height: 20,),
             SmartVillageButton(
               text: "Sincronizza Dati",
               color: Theme.of(context).colorScheme.primary,
-              enabled: !healthSync,
+              enabled: !(mosaicoManager?.healthSync ?? false),
               big: false,
               onPressed: () async {
                 await EasyLoading.show();
-                bool gotPermissions = await HealthManager.requestPermissions();
+                bool gotPermissions = await healthManager?.requestPermissions() ?? false;
                 SharedPreferences prefs = await SharedPreferences.getInstance();
                 prefs.setBool("healthSync", gotPermissions);
-                APIManager.healthSync = gotPermissions;
+                mosaicoManager?.healthSync = gotPermissions;
                 setState(() {
-                  healthSync = gotPermissions;
+                  mosaicoManager?.healthSync = gotPermissions;
                 });
-                if(!BackgroundServiceHelper.enabled) {
-                  BackgroundServiceHelper.enableBackgroundService();
+                if(!widget.backgroundServiceHelper.enabled) {
+                  widget.backgroundServiceHelper.enableBackgroundService();
                 }
                 await EasyLoading.dismiss();
               },
@@ -79,20 +103,20 @@ class SaluteState extends State<Salute> {
             const SizedBox(height: 30,),
             Row(
               children: [
-                AutoSizeText("Sincronizzazione automatica", style: TextStyle(color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray)),
+                AutoSizeText("Sincronizzazione automatica", style: TextStyle(color: (mosaicoManager?.healthSync ?? false) ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray)),
                 const Spacer(),
-                healthSync ? CupertinoSwitch(
+                (mosaicoManager?.healthSync ?? false) ? CupertinoSwitch(
                   // This bool value toggles the switch.
-                  value: APIManager.autoSync,
+                  value: mosaicoManager?.autoSync ?? false,
                   activeColor: Theme.of(context).colorScheme.primary,
                   onChanged: (bool? value) {
                     // This is called when the user toggles the switch.
                     setState(() {
-                      APIManager.autoSync = value ?? false;
-                      if((value ?? false) && !BackgroundServiceHelper.enabled) {
-                        BackgroundServiceHelper.enableBackgroundService();
+                      mosaicoManager?.autoSync = value ?? false;
+                      if((value ?? false) && !widget.backgroundServiceHelper.enabled) {
+                        widget.backgroundServiceHelper.enableBackgroundService();
                       } else {
-                        BackgroundServiceHelper.stopService();
+                        widget.backgroundServiceHelper.stopService();
                       }
                       SharedPreferences.getInstance().then((prefs) {
                         prefs.setBool("autoSync", value ?? false);
@@ -113,10 +137,10 @@ class SaluteState extends State<Salute> {
             const Spacer(),
             AutoSizeText(
               maxLines: 1,
-              HealthManager.lastMeasurementsUpload != null ?
-              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(HealthManager.lastMeasurementsUpload!)}" :
+              healthManager?.lastMeasurementsUpload != null ?
+              "Ultima sincronizzazione: ${DateFormat("dd/MM/yyyy HH:mm:ss").format(healthManager?.lastMeasurementsUpload ?? DateTime.now())}" :
               "Ultima sincronizzazione: nessuna",
-              style: TextStyle(fontSize: 17, color: healthSync ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray), textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 17, color: (mosaicoManager?.healthSync ?? false) ? Theme.of(context).colorScheme.onBackground : CupertinoColors.inactiveGray), textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10,),
             SmartVillageButton(
@@ -125,11 +149,12 @@ class SaluteState extends State<Salute> {
               big: false,
               onPressed: () async {
                 EasyLoading.show();
-                await HealthManager.writeData();
+                await healthManager?.completeUpload(widget.mosaicoUser.getCodiceFiscale()!);
+                healthManager?.setLastUploadDateFromMosaico().then((value) { setState((){}); });
                 EasyLoading.dismiss();
               },
               textColor: Theme.of(context).colorScheme.onPrimary,
-              enabled: healthSync,
+              enabled: mosaicoManager?.healthSync ?? false,
             ),
             const SizedBox(height: 30,)
           ],

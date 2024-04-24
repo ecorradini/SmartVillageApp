@@ -1,19 +1,21 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smartvillage/API/api_manager.dart';
-import 'package:smartvillage/API/health_manager.dart';
 import 'package:smartvillage/UI/utilities/rounded_container.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 
+import '../API/health/health_manager.dart';
+import '../API/mosaico/mosaico_manager.dart';
+import '../API/mosaico/mosaico_user.dart';
+
+//ignore: must_be_immutable
 class Configura extends StatefulWidget {
-  final bool? loggedFromTest;
-  final bool? logged;
-  const Configura({super.key, this.loggedFromTest, this.logged});
+  MosaicoUser mosaicoUser;
+  MosaicoManager mosaicoManager;
+  HealthManager healthManager;
+  Configura({super.key, required this.mosaicoUser, required this.mosaicoManager, required this.healthManager});
 
   @override
   ConfiguraState createState() => ConfiguraState();
@@ -47,19 +49,19 @@ class ConfiguraState extends State<Configura> {
                         }
                       }
                   ),
-                  if (!(widget.logged ?? false) || ((widget.logged ?? false) && (widget.loggedFromTest ?? false))) Row(
+                  if (!widget.mosaicoUser.isLogged() || (widget.mosaicoUser.isLogged() && MosaicoManager.testMode)) Row(
                     children: [
                       Text("Modalità di test", style: TextStyle(fontSize: 17, color: Theme.of(context).colorScheme.onTertiary)),
                       const Spacer(),
                       CupertinoSwitch(
                         // This bool value toggles the switch.
-                        value: APIManager.testMode,
+                        value: MosaicoManager.testMode,
                         trackColor: CupertinoColors.lightBackgroundGray,
                         activeColor: Theme.of(context).colorScheme.primary,
                         onChanged: (bool? value) {
                           // This is called when the user toggles the switch.
                           setState(() {
-                            APIManager.testMode = value ?? false;
+                            MosaicoManager.testMode = value ?? false;
                             SharedPreferences.getInstance().then((prefs) {
                               prefs.setBool("testMode", value ?? false);
                             });
@@ -118,6 +120,6 @@ class ConfiguraState extends State<Configura> {
     prefs.remove("healthSync");
     prefs.remove("autoSync");
     prefs.remove("logged");
-    HealthManager.revokePermissions();
+    //widget.healthManager.revokePermissions();
   }
 }

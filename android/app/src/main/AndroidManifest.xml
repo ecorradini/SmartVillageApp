@@ -8,36 +8,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
     <uses-permission android:name="com.google.android.gms.permission.READ_HEALTH_DATA" />
-    <!-- Permissions for Reading Health Data Types -->
-    <uses-permission android:name="android.permission.READ_HEART_RATE" />
-    <uses-permission android:name="android.permission.READ_BLOOD_PRESSURE" />
-    <uses-permission android:name="android.permission.READ_BLOOD_GLUCOSE" />
-    <uses-permission android:name="android.permission.READ_OXYGEN_SATURATION" />
-    <uses-permission android:name="android.permission.READ_BODY_MASS_INDEX" />
-    <uses-permission android:name="android.permission.READ_BODY_FAT_PERCENTAGE" />
-    <uses-permission android:name="android.permission.READ_BODY_WEIGHT" />
-
-    <queries>
-        <package android:name="com.google.android.apps.healthdata" />
-        <intent>
-            <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-        </intent>
-    </queries>
 
     <application
         android:label="Smart Village"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         tools:replace="android:label">
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
-            </intent-filter>
-        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -57,9 +33,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

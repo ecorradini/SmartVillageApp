@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
+//ignore: must_be_immutable
 class SmartVillageAppBar extends AppBar {
   SmartVillageAppBar({Key? key, String? title, Color background=CupertinoColors.white, required BuildContext context, bool small=false}) : super(
     key: key,
@@ -15,7 +18,7 @@ class SmartVillageAppBar extends AppBar {
     ),
     centerTitle: false,
     elevation: 0,
-    toolbarHeight: small ? 15 : 100.0,
+    toolbarHeight: small ? 20 : 100.0,
     flexibleSpace: Container(),
     automaticallyImplyLeading: false,
     backgroundColor: background,

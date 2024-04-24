@@ -1,19 +1,22 @@
-import 'dart:convert';
-
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smartvillage/API/api_manager.dart';
-import 'package:smartvillage/API/background_service_helper.dart';
+import 'package:smartvillage/API/mosaico/error_manager.dart';
 import 'package:smartvillage/UI/utilities/button.dart';
 import 'package:smartvillage/UI/utilities/scaffold.dart';
 import 'package:smartvillage/UI/utilities/textfield.dart';
 
+import '../API/mosaico/mosaico_user.dart';
+import '../API/mosaico/user_manager.dart';
+
+//ignore: must_be_immutable
 class HomeBefore extends StatefulWidget {
-  const HomeBefore({super.key});
+  MosaicoUserManager mosaicoUserManager;
+  MosaicoUser mosaicoUser;
+  HomeBefore({super.key, required this.mosaicoUserManager, required this.mosaicoUser});
 
   @override
   HomeBeforeState createState() => HomeBeforeState();
@@ -23,7 +26,6 @@ class HomeBeforeState extends State<HomeBefore> {
 
   final _emailTextController = TextEditingController();
   final _passwordTextController = TextEditingController();
-  //final _cfTextController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -74,14 +76,6 @@ class HomeBeforeState extends State<HomeBefore> {
                           placeholder: "Password",
                           context: context,
                         ),
-                        /*const SizedBox(height: 10,),
-                        SmartVillageTextFieldWithIcon(
-                          icon: CupertinoIcons.creditcard,
-                          controller: _cfTextController,
-                          keyboardType: TextInputType.text,
-                          placeholder: "Codice Fiscale",
-                          context: context,
-                        ),*/
                       ],
                     ),
                   ),
@@ -95,16 +89,19 @@ class HomeBeforeState extends State<HomeBefore> {
                       FocusManager.instance.primaryFocus?.unfocus();
                       SharedPreferences prefs = await SharedPreferences.getInstance();
                       if(context.mounted) {
-                        bool logged = await APIManager.login(
+                        MosaicoUser? logged = await widget.mosaicoUserManager.login(
                             email: _emailTextController.text.trim(),
                             password: _passwordTextController.text.trim(),
-                            //codiceFiscale: _cfTextController.text.trim(),
-                            prefs: prefs,
-                            context: context
+                            prefs: prefs
                         );
                         EasyLoading.dismiss();
-                        if (logged && context.mounted) {
-                          Phoenix.rebirth(context);
+                        if(logged != null) {
+                          widget.mosaicoUser = logged;
+                          if(context.mounted) {
+                            Phoenix.rebirth(context);
+                          }
+                        } else {
+                          ErrorManager.showError(context, ErrorManager.ERROR_ACCOUNT_NOT_EXISTS);
                         }
                       }
                     },

@@ -65,6 +65,7 @@ class DefaultFirebaseOptions {
     projectId: 'smartvillage-be3dd',
     databaseURL: 'https://smartvillage-be3dd-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'smartvillage-be3dd.appspot.com',
+    androidClientId: '902212500904-04qf2106is9r9ii1bb0ej7bjl7fhbpth.apps.googleusercontent.com',
     iosBundleId: 'it.diism.smartvillage23',
   );
 }

@@ -6,16 +6,22 @@ import 'package:health_kit_reporter/health_kit_reporter.dart';
 import 'package:health_kit_reporter/model/predicate.dart';
 import 'package:health_kit_reporter/model/type/quantity_type.dart';
 import 'package:health_kit_reporter/model/update_frequency.dart';
-import 'package:smartvillage/API/notification_service.dart';
+import 'package:smartvillage/API/phone/notification_service.dart';
 
-import 'health_manager.dart';
+import '../health/health_manager.dart';
+import '../mosaico/mosaico_user.dart';
 
 class BackgroundServiceHelper {
 
-  static Timer? uploadTimer;
-  static bool enabled = false;
+  Timer? uploadTimer;
+  HealthManager _healthManager;
+  MosaicoUser _mosaicoUser;
+  bool enabled = false;
 
-  static Future<void> enableBackgroundService() async {
+  BackgroundServiceHelper({required HealthManager healthManager, required MosaicoUser mosaicoUser}) :
+      _healthManager = healthManager, _mosaicoUser = mosaicoUser;
+
+  Future<void> enableBackgroundService() async {
     LocalNotificationService.initialize();
     final config = BackgroundFetchConfig(minimumFetchInterval: 1, requiredNetworkType: NetworkType.ANY);
     int status = await BackgroundFetch.configure(
@@ -42,17 +48,28 @@ class BackgroundServiceHelper {
     );
     print("Background status: $status");
     if(Platform.isIOS) await observerQuery();
+    _startBackgroundTimer();
     enabled = true;
   }
 
-  static Future<void> stopService() async {
+  void _startBackgroundTimer() {
+    uploadTimer = Timer.periodic(const Duration(seconds: 180), (timer) {
+      print("TIMER");
+      _healthManager.completeUpload(_mosaicoUser.getCodiceFiscale()!).then((value) {
+        _startBackgroundTimer();
+      });
+    });
+  }
+
+  Future<void> stopService() async {
     await BackgroundFetch.stop("com.transistorsoft.smartvillagefetch");
     await BackgroundFetch.stop("com.transistorsoft.fetch");
+    uploadTimer?.cancel();
     enabled = false;
   }
 
-  static Future<void> _onBackgroundUpdate() async {
-    await HealthManager.writeData();
+  Future<void> _onBackgroundUpdate() async {
+    await _healthManager.completeUpload(_mosaicoUser.getCodiceFiscale()!);
 
     BackgroundFetch.scheduleTask(TaskConfig(
         taskId: "com.transistorsoft.smartvillagefetch",
@@ -60,7 +77,7 @@ class BackgroundServiceHelper {
     ));
   }
 
-  static Future<void> observerQuery() async {
+  Future<void> observerQuery() async {
     final identifier = QuantityType.vo2Max.identifier;
     HealthKitReporter.observerQuery(
       [
@@ -77,7 +94,7 @@ class BackgroundServiceHelper {
       onUpdate: (identifier) async {
         print('OBSERVERQUERY');
         LocalNotificationService.initialize();
-        await HealthManager.writeData();
+        await _healthManager.completeUpload(_mosaicoUser.getCodiceFiscale()!);
       },
     );
     await HealthKitReporter.enableBackgroundDelivery(

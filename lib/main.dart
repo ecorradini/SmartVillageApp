@@ -9,20 +9,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:smartvillage/API/api_manager.dart';
-import 'package:smartvillage/API/background_service_helper.dart';
-import 'package:smartvillage/API/health_manager.dart';
-import 'package:smartvillage/API/user.dart';
+import 'package:smartvillage/API/health/health_manager_android.dart';
+import 'package:smartvillage/API/phone/background_service_helper.dart';
+import 'package:smartvillage/API/health/health_manager_ios.dart';
+import 'package:smartvillage/API/mosaico/user_manager.dart';
 import 'package:smartvillage/UI/loading_splash.dart';
 import 'package:smartvillage/UI/main_navigation.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:wakelock/wakelock.dart';
 
-import 'API/notification_service.dart';
-import 'firebase_options.dart';
+import 'API/health/health_manager.dart';
+import 'API/mosaico/mosaico_manager.dart';
+import 'API/mosaico/mosaico_user.dart';
+import 'API/phone/notification_service.dart';
+import 'API/phone/firebase_options.dart';
 
 void main() {
   runApp(
@@ -41,17 +43,27 @@ class SmartVillageApp extends StatefulWidget {
 }
 
 class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObserver {
+
+  HealthManager? healthManager;
+  MosaicoUser mosaicoUser = MosaicoUser();
+  MosaicoManager mosaicoManager = MosaicoManager();
+  MosaicoUserManager mosaicoUserManager = MosaicoUserManager();
+  BackgroundServiceHelper? backgroundServiceHelper;
   late Future<Map<String,dynamic>> initValues;
+  bool firstRun = true;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     switch(state) {
       case AppLifecycleState.resumed:
         Wakelock.enable();
-        if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
-          BackgroundServiceHelper.enableBackgroundService();
-        } else if(Utente.logged && APIManager.healthSync && APIManager.autoSync) {
-          HealthManager.writeData();
+        if(healthManager != null && mosaicoUser.isLogged() && mosaicoManager.healthSync && mosaicoManager.autoSync) {
+          setState(() {
+            healthManager!.currentlyUploading = true;
+          });
+          healthManager!.completeUpload(mosaicoUser.getCodiceFiscale()!).then((value) {
+            setState(() {});
+          });
         }
         break;
       case AppLifecycleState.paused:
@@ -64,9 +76,14 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
 
   @override
   void initState() {
-    super.initState();
+    if(Platform.isIOS) {
+      healthManager = HealthManagerIOS();
+    } else if(Platform.isAndroid) {
+      healthManager = HealthManagerAndroid();
+    }
     initValues = init();
     WidgetsBinding.instance.addObserver(this);
+    super.initState();
   }
 
   @override
@@ -74,85 +91,65 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
     super.dispose();
   }
 
+  ///Tutta l'inizializzazione necessaria
   Future<Map<String,dynamic>> init() async {
+    //Preferences del telefono
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    //Ricarico se esiste MosaicoManager
+    mosaicoManager.loadFromPreferences(prefs);
     //Firebase setup
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
-
+    await Firebase.initializeApp(
+      name: 'smartvillage',
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     //Get current endpoints
     FirebaseDatabase database = FirebaseDatabase.instance;
     DatabaseReference prodRef = database.ref("prod_url");
     DatabaseReference testRef = database.ref("test_url");
-    APIManager.prodUrl = (await prodRef.get()).value as String;
-    APIManager.testUrl = (await testRef.get()).value as String;
+    MosaicoManager.prodUrl = (await prodRef.get()).value as String;
+    MosaicoManager.testUrl = (await testRef.get()).value as String;
     //Set up automatic update on change
     prodRef.onValue.listen((DatabaseEvent event) {
-      APIManager.prodUrl = event.snapshot.value as String;
+      MosaicoManager.prodUrl = event.snapshot.value as String;
     });
     testRef.onValue.listen((DatabaseEvent event) {
-      APIManager.testUrl = event.snapshot.value as String;
+      MosaicoManager.testUrl = event.snapshot.value as String;
     });
 
+    //Setup notifiche e permessi
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation("Europe/Rome"));
-    await AppTrackingTransparency.requestTrackingAuthorization();
+    if(Platform.isIOS) await AppTrackingTransparency.requestTrackingAuthorization();
     if(Platform.isIOS) await LocalNotificationService.requestPermissionsIOS();
     if(Platform.isAndroid) await LocalNotificationService.requestPermissionsAndroid();
 
     //USIAMO UN DIZIONARIO NEL CASO IN FUTURO DEBBANO ESSERE AGGIUNGE ULTERIORI INFO DA CARICARE
     Map<String,dynamic> res = {};
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    //TEST MODE
-    APIManager.testMode = prefs.getBool("testMode") ?? false;
-
-    //LOGIN
-    res["logged"] = await autoLogin(prefs);
-    Utente.logged = res["logged"];
-    res["loggedFromTest"] = prefs.getBool("loggedFromTest");
-
-    //Setup Health
-    HealthManager.healthSetup();
-    APIManager.healthSync = prefs.getBool("healthSync") ?? false;
-    APIManager.autoSync = prefs.getBool("autoSync") ?? true;
-    String? lastMeasurementsDate = prefs.getString("lastDate");
-    if(lastMeasurementsDate != null) {
-      try {
-        HealthManager.lastMeasurementsUpload = DateFormat("MMMM, dd yyyy HH:mm:ss Z").parse(lastMeasurementsDate);
-      } catch(_) {
-        HealthManager.lastMeasurementsUpload = DateFormat("yyyy-MM-dd HH:mmm:ss").parse(lastMeasurementsDate);
+    MosaicoUser? loadedUser = MosaicoUser.loadFromPrefs(prefs);
+    //Se precedentemente loggato, ri-eseguo il login
+    if(loadedUser != null && loadedUser.hasEmailAndPassword()) {
+      MosaicoUser? logged = await mosaicoUserManager.login(email: loadedUser.getEmail()!, password: loadedUser.getPassword()!, prefs: prefs);
+      if(logged != null) {
+        firstRun = false;
+        mosaicoUser = logged;
+        //Ricarico se esiste HealthManager
+        await healthManager!.loadFromPreferences(prefs);
+        backgroundServiceHelper = BackgroundServiceHelper(healthManager: healthManager!, mosaicoUser: mosaicoUser);
+        if(!backgroundServiceHelper!.enabled && mosaicoManager.healthSync && mosaicoManager.autoSync) {
+          backgroundServiceHelper!.enableBackgroundService();
+        }
       }
     }
-    if(Utente.logged && !BackgroundServiceHelper.enabled && APIManager.healthSync && APIManager.autoSync) {
-      BackgroundServiceHelper.enableBackgroundService();
-    }
+
+    //Metto mosaicomanager e healthmanager nel dizionario, così li mandiamo ad altre view
+    res["mosaicoManager"] = mosaicoManager;
+    res["mosaicoUserManager"] = mosaicoUserManager;
+    res["healthManager"] = healthManager;
+    res["mosaicoUser"] = mosaicoUser;
+    res["backgroundServiceHelper"] = backgroundServiceHelper;
 
     return res;
-  }
-
-  Future<bool> autoLogin(SharedPreferences prefs) async {
-    //Prendo dati login
-    String? email = prefs.getString("email");
-    String? password = prefs.getString("password");
-    //String? codiceFiscale = prefs.getString("codiceFiscale");
-    //Se dati esistono allora loggo, altrimenti no
-    if(email == null || password == null) {// || codiceFiscale == null) {
-      return false;
-    }
-    else {
-      //AUTOLOGIN
-      bool logged = await APIManager.login(
-          email: email,
-          password: password,
-          //codiceFiscale: codiceFiscale,
-          prefs: prefs,
-          context: context
-      );
-      return logged;
-    }
   }
 
   // This widget is the root of your application.
@@ -214,7 +211,7 @@ class SmartVillageAppState extends State<SmartVillageApp> with WidgetsBindingObs
             return LoadingSplashScreen();
           } else {
             //ERROR
-            print(snapshot.error!);
+            print("ERROR: ${snapshot.error!}");
             return Container();
           }
         },

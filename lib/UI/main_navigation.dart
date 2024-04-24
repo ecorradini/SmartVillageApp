@@ -4,17 +4,30 @@ import 'package:smartvillage/UI/home_after.dart';
 import 'package:smartvillage/UI/home_before.dart';
 import 'package:smartvillage/UI/salute.dart';
 
+import '../API/health/health_manager.dart';
+import '../API/mosaico/mosaico_user.dart';
 import 'configura.dart';
 
+//ignore: must_be_immutable
 class MainNavigation extends StatefulWidget {
-  final Map<String,dynamic> initValues;
-  const MainNavigation({super.key, required this.initValues});
+  Map<String,dynamic> initValues;
+  MainNavigation({super.key, required this.initValues});
 
   @override
   MainNavigationState createState() => MainNavigationState();
 }
 
 class MainNavigationState extends State<MainNavigation> {
+
+  late MosaicoUser mosaicoUser;
+  HealthManager? healthManager;
+
+  @override
+  void initState() {
+    mosaicoUser = widget.initValues["mosaicoUser"]!;
+    healthManager = widget.initValues["healthManager"]!;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +45,7 @@ class MainNavigationState extends State<MainNavigation> {
                 icon: Icon(CupertinoIcons.house_fill),
                 label: 'Home',
               ),
-              if(widget.initValues["logged"] ?? false) const BottomNavigationBarItem(
+              if(mosaicoUser.isLogged()) const BottomNavigationBarItem(
                 icon: Icon(CupertinoIcons.heart_fill),
                 label: 'Salute',
               ),
@@ -46,19 +59,20 @@ class MainNavigationState extends State<MainNavigation> {
             return CupertinoTabView(
               builder: (BuildContext context) {
                 if(index==0) {
-                  if(!widget.initValues["logged"]) {
-                    return const HomeBefore();
+                  if(!mosaicoUser.isLogged()) {
+                    return HomeBefore(mosaicoUserManager: widget.initValues["mosaicoUserManager"]!, mosaicoUser: mosaicoUser,);
                   } else {
-                    return HomeAfter();
+                    return HomeAfter(user: mosaicoUser,);
                   }
                 } else if (index==1) {
-                  if(widget.initValues["logged"] ?? false) {
-                    return Salute();
+                  if(mosaicoUser.isLogged()) {
+                    return Salute(mosaicoManager: widget.initValues["mosaicoManager"]!, mosaicoUser: mosaicoUser,
+                      healthManager: healthManager!, backgroundServiceHelper: widget.initValues["backgroundServiceHelper"]!,);
                   } else {
-                    return Configura(loggedFromTest: widget.initValues["loggedFromTest"], logged: widget.initValues["logged"],);
+                    return Configura(mosaicoManager: widget.initValues["mosaicoManager"]!, mosaicoUser: mosaicoUser, healthManager: healthManager!,);
                   }
                 } else {
-                  return Configura(loggedFromTest: widget.initValues["loggedFromTest"], logged: widget.initValues["logged"],);
+                  return Configura(mosaicoManager: widget.initValues["mosaicoManager"]!, mosaicoUser: mosaicoUser, healthManager: healthManager!,);
                 }
               },
             );
